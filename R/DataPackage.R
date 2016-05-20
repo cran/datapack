@@ -348,11 +348,9 @@ setMethod("insertRelationship", signature("DataPackage"),
 #' @param x a DataPackage object
 #' @param ... Additional parameters
 #' @examples
-#' \dontrun{
 #' dp <- new("DataPackage")
 #' recordDerivation(dp, "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1",
 #'                      "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.45.1")
-#' }
 #' @seealso \code{\link{DataPackage-class}}
 #' @export
 setGeneric("recordDerivation", function(x, ...) {
@@ -391,10 +389,16 @@ setGeneric("getRelationships", function(x, ...) {
 setMethod("getRelationships", signature("DataPackage"), function(x, ...) {
   
   # Get the relationships stored by insertRelationship
-  relationships <- x@relations[["relations"]]
-  
-  # Reorder output data frame by "subject" column
-  relationships <- relationships[order(relationships$subject, relationships$predicate, relationships$object),]
+  if (has.key("relations", x@relations)) {
+      relationships <- x@relations[["relations"]]
+      # Reorder output data frame by "subject" column
+      if (nrow(relationships > 0)) {
+          relationships <- relationships[order(relationships$subject, relationships$predicate, relationships$object),]
+      }
+  } else {
+      relationships <- data.frame()
+  }
+    
   return(relationships)
 })
 
@@ -521,16 +525,19 @@ setGeneric("serializePackage", function(x, ...) {
 #' data <- charToRaw("1,2,3\n4,5,6")
 #' do <- new("DataObject", id="do1", dataobj=data, format="text/csv", user="jsmith")
 #' dp <- addData(dp, do)
-#' data2 <- charToRaw("7,8,9\n4,10,11")
+#' data2 <- charToRaw("7,8,9\n10,11,12")
 #' do2 <- new("DataObject", id="do2", dataobj=data2, format="text/csv", user="jsmith")
 #' dp <- addData(dp, do2)
-#' recordDerivation(dp, "do2", "do2")
-#' status <- serializePackage(dp, file="/tmp/resmap.json", syntaxName="json", 
-#'   mimeType="application/json")
-#' status <- serializePackage(dp, file="/tmp/resmap.rdf", syntaxName="rdfxml", 
-#'   mimeType="application/rdf+xml")
-#' status <- serializePackage(dp, file="/tmp/resmap.ttl", syntaxName="turtle", 
-#'   mimeType="text/turtle")
+#' recordDerivation(dp, "do", "do2")
+#' \dontrun{
+#' td <- tempdir()
+#' status <- serializePackage(dp, file=paste(td, "resmap.json", sep="/"), syntaxName="json",  
+#'     mimeType="application/json")
+#' status <- serializePackage(dp, file=paste(td, "resmap.xml", sep="/"), syntaxName="rdfxml", 
+#'     mimeType="application/rdf+xml")
+#' status <- serializePackage(dp, file=paste(td, "resmap.ttl", sep="/"), syntaxName="turtle", 
+#'     mimeType="text/turtle")
+#' }
 setMethod("serializePackage", signature("DataPackage"), function(x, file, 
                                                                  id = as.character(NA),
                                                                  syntaxName="rdfxml", 
@@ -605,7 +612,9 @@ setGeneric("serializeToBagIt", function(x, ...) {
 #' # Create a relationship between the two data objects
 #' recordDerivation(dp, "do2", "do2")
 #' # Write out the data package to a BagIt file
+#' \dontrun{
 #' bagitFile <- serializeToBagIt(dp, syntaxName="json", mimeType="application/json")
+#' }
 #' @export
 setMethod("serializeToBagIt", signature("DataPackage"), function(x, mapId=as.character(NA),
                                                                  syntaxName=as.character(NA),

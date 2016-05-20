@@ -61,16 +61,19 @@ dp <- new("DataPackage")
 data <- charToRaw("1,2,3\\n4,5,6")
 do <- new("DataObject", id="do1", dataobj=data, format="text/csv", user="jsmith")
 dp <- addData(dp, do)
-data2 <- charToRaw("7,8,9\\n4,10,11")
+data2 <- charToRaw("7,8,9\\n10,11,12")
 do2 <- new("DataObject", id="do2", dataobj=data2, format="text/csv", user="jsmith")
 dp <- addData(dp, do2)
-recordDerivation(dp, "do2", "do2")
-status <- serializePackage(dp, file="/tmp/resmap.json", syntaxName="json", 
-  mimeType="application/json")
-status <- serializePackage(dp, file="/tmp/resmap.rdf", syntaxName="rdfxml", 
-  mimeType="application/rdf+xml")
-status <- serializePackage(dp, file="/tmp/resmap.ttl", syntaxName="turtle", 
-  mimeType="text/turtle")
+recordDerivation(dp, "do", "do2")
+\dontrun{
+td <- tempdir()
+status <- serializePackage(dp, file=paste(td, "resmap.json", sep="/"), syntaxName="json",  
+    mimeType="application/json")
+status <- serializePackage(dp, file=paste(td, "resmap.xml", sep="/"), syntaxName="rdfxml", 
+    mimeType="application/rdf+xml")
+status <- serializePackage(dp, file=paste(td, "resmap.ttl", sep="/"), syntaxName="turtle", 
+    mimeType="text/turtle")
+}
 }
 \seealso{
 \code{\link{DataPackage-class}}

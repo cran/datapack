@@ -8,9 +8,9 @@ myObj <- new("DataObject", id=myId, format="text/csv", filename=csvfile)
 ## ------------------------------------------------------------------------
 rawData <- getData(myObj)
 
-## ------------------------------------------------------------------------
-tf <- tempfile(fileext=".csv")
-write.csv(rawToChar(rawData), tf, quote=F, row.names=F)
+## ----eval=FALSE----------------------------------------------------------
+#  tf <- tempfile(fileext=".csv")
+#  write.csv(rawToChar(rawData), tf, quote=F, row.names=F)
 
 ## ------------------------------------------------------------------------
 id <- getIdentifier(myObj)
@@ -58,8 +58,8 @@ myid
 
 ## ------------------------------------------------------------------------
 dp <- new("DataPackage")
-dp <- addData(dp, metadataObj)
-dp <- addData(dp, sciObj)
+dp <- addData(dp, do = metadataObj)
+dp <- addData(dp, do = sciObj)
 # The second object will be added in the next section 
 
 ## ------------------------------------------------------------------------
@@ -82,7 +82,7 @@ relations <- getRelationships(dp)
 relations[,1:3]
 
 ## ------------------------------------------------------------------------
-dp <- addData(dp, sciObj2, metadataObj)
+dp <- addData(dp, do = sciObj2, mo = metadataObj)
 
 ## ------------------------------------------------------------------------
 relations <- getRelationships(dp)
@@ -93,20 +93,20 @@ relations[,1:3]
 #  dp <- insertRelationship(dp, subjectID=sciId2, objectIDs=sciId,
 #                     predicate="http://www.w3.org/ns/prov#wasDerivedFrom")
 
-## ------------------------------------------------------------------------
-tf <- tempfile()
-packageId <- paste("urn:uuid:", UUIDgenerate(), sep="")
-serializePackage(dp, file=tf, id=packageId)
+## ---- eval=FALSE---------------------------------------------------------
+#  tf <- tempfile()
+#  packageId <- paste("urn:uuid:", UUIDgenerate(), sep="")
+#  serializePackage(dp, file=tf, id=packageId)
 
-## ------------------------------------------------------------------------
-tf <- tempfile()
-packageId <- paste("urn:uuid:", UUIDgenerate(), sep="")
-serializePackage(dp, file=tf, id=packageId, resolveURI="")
+## ---- eval=FALSE---------------------------------------------------------
+#  tf <- tempfile()
+#  packageId <- paste("urn:uuid:", UUIDgenerate(), sep="")
+#  serializePackage(dp, file=tf, id=packageId, resolveURI="")
 
-## ------------------------------------------------------------------------
-tf <- tempfile()
-packageId <- paste("urn:uuid:", UUIDgenerate(), sep="")
-serializePackage(dp, file=tf, id=packageId, syntaxName="json", mimeType="application/json", resolveURI="")
+## ---- eval=FALSE---------------------------------------------------------
+#  tf <- tempfile()
+#  packageId <- paste("urn:uuid:", UUIDgenerate(), sep="")
+#  serializePackage(dp, file=tf, id=packageId, syntaxName="json", mimeType="application/json", resolveURI="")
 
 ## ---- eval=F-------------------------------------------------------------
 #  bagitFilename <- serializeToBagIt(dp)

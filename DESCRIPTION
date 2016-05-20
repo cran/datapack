@@ -1,7 +1,7 @@
 Package: datapack
 Title: A Flexible Container to Transport and Manipulate Data and
         Associated Resources
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c( person("Matthew B.", "Jones", role = c("aut", "cre"), email = "jones@nceas.ucsb.edu"),
   person("Peter", "Slaughter", role = "aut", email = "slaughter@nceas.ucsb.edu"),
   person("Regents of the University of California", role = c("cph")))
@@ -14,7 +14,7 @@ Description: Provides a flexible container to transport and
     can be serialized and transported as structured files that have been created following 
     the BagIt specification. The BagIt specification is described at 
     <https://tools.ietf.org/html/draft-kunze-bagit-08>.
-Date: 2016-03-24
+Date: 2016-05-19
 Depends: R (>= 3.1.1)
 Imports: digest, methods, redland, XML, hash, uuid
 Suggests: testthat, knitr
@@ -26,10 +26,10 @@ Collate: 'SystemMetadata.R' 'dmsg.R' 'DataObject.R' 'DataPackage.R'
         'ResourceMap.R' 'datapack-package.r'
 RoxygenNote: 5.0.1
 NeedsCompilation: no
-Packaged: 2016-03-24 23:49:43 UTC; jones
+Packaged: 2016-05-20 00:34:04 UTC; jones
 Author: Matthew B. Jones [aut, cre],
   Peter Slaughter [aut],
   Regents of the University of California [cph]
 Maintainer: Matthew B. Jones <jones@nceas.ucsb.edu>
 Repository: CRAN
-Date/Publication: 2016-03-25 01:15:38
+Date/Publication: 2016-05-20 05:21:27
