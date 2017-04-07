@@ -3,41 +3,61 @@
 \docType{class}
 \name{DataPackage-class}
 \alias{DataPackage-class}
-\title{A class representing a data package, which can contain data objects}
+\title{A class representing a data package}
 \description{
-The DataPackage class provides methods for added and extracting
-data objects from a datapackage. The contents of a package
-can be determined and the package can be prepared for transport before being
-uploaded to a data repository or archived.
+The DataPackage class provides methods for adding and extracting
+data objects from a data package. The contents of a data package
+can include arbitrary types of objects, including data files, program code,
+visualizations and images, animations, and any other type of file. The DataPackage class
+stores the individual members of the data package along with key system-level metadata
+about each object, including its size, checksum, identifier, and other key information
+needed to effectively archive the members of the package.  In addition, the
+DataPackage class can include key provenance metadata about the relationships among
+the objects in the data package.  For example, the data package can document that one object
+provides documentation for another (\code{cito:documents}), and that one object was
+derived from another (\code{prov:wasDerivedFrom}) by executing a program that 
+used source data (\code{prov:used}) to create a derived data object 
+{\code{prov:wasGeneratedBy}}.  These relationships are integral to the data package,
+and can be visualized by programs that understand the ProvONE provenance 
+model (see \url{https://purl.dataone.org/provone-v1-dev}). 
+
+The DataPackage class is an R representation of an underlying Open Archives 
+Initiative ORE model (Object Reuse and Exchange; 
+see \url{https://www.openarchives.org/ore/}), and follows the DataONE Data
+Packaging model
+(see \url{https://releases.dataone.org/online/api-documentation-v2.0.1/design/DataPackage.html}).
 }
 \section{Slots}{
 
 \describe{
 \item{\code{relations}}{A hash containing provenance relationships of package objects}
 
-\item{\code{objects}}{A hash containing identifiers for data object in the DataPackage}
+\item{\code{objects}}{A hash containing identifiers for objects in the DataPackage}
 
 \item{\code{sysmeta}}{A SystemMetadata class instance describing the package}
+
+\item{\code{externalIds}}{A list containing identifiers for objects associated with the DataPackage}
 }}
+
 \section{Methods}{
 
 \itemize{
  \item{\code{\link[=DataPackage-initialize]{initialize}}}{: Initialize a DataPackage object}
  \item{\code{\link{getData}}}{: Get the data content of a specified data object}
- \item{\code{\link{getSize}}}{: Get the Count of Objects in the Package}
- \item{\code{\link{getIdentifiers}}}{: Get the Identifiers of Package Members}
+ \item{\code{\link{getSize}}}{: Get the Count of Objects in the DataPackage}
+ \item{\code{\link{getIdentifiers}}}{: Get the Identifiers of DataPackage members}
  \item{\code{\link{addData}}}{: Add a DataObject to the DataPackage}
- \item{\code{\link{insertRelationship}}}{: Record relationships of objects in a DataPackage}
- \item{\code{\link{recordDerivation}}}{: Record derivation relationships between objects in a DataPackage}
- \item{\code{\link{getRelationships}}}{: Retrieve relationships of package objects}
- \item{\code{\link{containsId}}}{: Returns true if the specified object is a member of the package}
- \item{\code{\link{removeMember}}}{: Remove the Specified Member from the Package}
- \item{\code{\link{getMember}}}{: Return the Package Member by Identifier}
- \item{\code{\link{serializePackage}}}{: Create an OAI-ORE resource map from the package}
+ \item{\code{\link{insertRelationship}}}{: Insert relationships between objects in a DataPackage}
+ \item{\code{\link{getRelationships}}}{: Retrieve relationships of data package objects}
+ \item{\code{\link{containsId}}}{: Returns true if the specified object is a member of the data package}
+ \item{\code{\link{removeMember}}}{: Remove the Specified Member from the DataPackage}
+ \item{\code{\link{getMember}}}{: Return the DataPackage Member by Identifier}
+ \item{\code{\link{serializePackage}}}{: Create an OAI-ORE resource map from the data package}
  \item{\code{\link{serializeToBagIt}}}{: Serialize A DataPackage into a BagIt Archive File}
+ \item{\code{\link{describeWorkflow}}}{: Add data derivation information to a DataPackage}
 }
 }
+
 \seealso{
 \code{\link{datapack}}
 }
-

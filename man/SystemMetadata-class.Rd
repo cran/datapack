@@ -57,7 +57,10 @@ access policy, replication policy, and related metadata.
 \item{\code{mediaType}}{value of type \code{"character"}, the IANA Media Type (aka MIME-Type) of the object, e.g. "text/csv".}
 
 \item{\code{fileName}}{value of type \code{"character"}, a suggested file name for the object.}
+
+\item{\code{mediaTypeProperty}}{value of type a \code{"list"} of \code{"character"}, IANA Media Type properties for the \code{"mediaType"} argument}
 }}
+
 \section{Methods}{
 
 \itemize{
@@ -68,9 +71,10 @@ access policy, replication policy, and related metadata.
  \item{\code{\link{validate}}}{: Validate a SystemMetadata object}
  \item{\code{\link{addAccessRule}}}{: Add access rules to an object such as system metadata}
  \item{\code{\link{hasAccessRule}}}{: Determine if a particular access rules exists within SystemMetadata.}
+ \item{\code{\link{clearAccessPolicy}}}{: Clear the accessPolicy from the specified object.}
 }
 }
+
 \seealso{
 \code{\link{datapack}}
 }
-

@@ -2,8 +2,8 @@
 % Please edit documentation in R/SystemMetadata.R
 \docType{methods}
 \name{initialize,SystemMetadata-method}
-\alias{SystemMetadata-initialize}
 \alias{initialize,SystemMetadata-method}
+\alias{SystemMetadata-initialize}
 \title{Initialize a DataONE SystemMetadata object with default values or values passed in to the constructor.}
 \usage{
 \S4method{initialize}{SystemMetadata}(.Object, identifier = as.character(NA),
@@ -18,7 +18,8 @@
   originMemberNode = as.character(NA),
   authoritativeMemberNode = as.character(NA), preferredNodes = list(),
   blockedNodes = list(), seriesId = as.character(NA),
-  mediaType = as.character(NA), fileName = as.character(NA))
+  mediaType = as.character(NA), fileName = as.character(NA),
+  mediaTypeProperty = list())
 }
 \arguments{
 \item{.Object}{The object being initialized}
@@ -66,6 +67,8 @@
 \item{mediaType}{value of type \code{"character"}, the IANA Media Type (aka MIME-Type) of the object, e.g. "text/csv".}
 
 \item{fileName}{value of type \code{"character"}, a suggested file name for the object (if the object containing this sysmeta is serialized).}
+
+\item{mediaTypeProperty}{value of type a \code{"list"} of \code{"character"}, IANA Media Type properties for the \code{"mediaType"} argument}
 }
 \value{
 the SystemMetadata instance representing an object
@@ -76,8 +79,7 @@ needed to manage objects across repository systems. SystemMetadata contains basi
 access policy, replication policy, and related metadata.
 }
 \seealso{
-\url{http://mule1.dataone.org/ArchitectureDocs-current/apis/Types.html#Types.SystemMetadata}
+\url{https://releases.dataone.org/online/api-documentation-v2.0/apis/Types.html}
 
 \code{\link{SystemMetadata-class}}
 }
-

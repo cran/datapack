@@ -44,10 +44,10 @@ test_that("datapack methods work", {
     rdata <- getData(dpkg, id1)
     expect_that(length(rdata), equals(length(data)))
     nodata <- getData(dpkg, "bad_id")
-    expect_that(nodata, is_null())
+    expect_null(nodata)
     rdo <- getMember(dpkg, id1)
-    expect_that(class(do), matches("DataObject"))
-    expect_that(getIdentifier(do), matches(id1))
+    expect_match(class(do), "DataObject")
+    expect_match(getIdentifier(do), id1)
     do2 <- new("DataObject", id2, data, format, user, node)
     dpkg <- addData(dpkg, do2)
     expect_that(getSize(dpkg), equals(2))
@@ -79,9 +79,9 @@ test_that("datapack methods work", {
     # Test that the addData() function adds the 'documents' relationship if a metadata object is 
     # specified
     relations <- getRelationships(dpkg)
-    expect_that(relations[relations$subject == id1, 'predicate'], matches("isDocumentedBy"))
+    expect_match(relations[relations$subject == id1, 'predicate'], "isDocumentedBy")
     expect_that(relations[relations$subject == id1, 'object'], equals(mdId))
-    expect_that(relations[relations$subject == mdId, 'predicate'], matches("documents"))
+    expect_match(relations[relations$subject == mdId, 'predicate'], "documents")
     expect_that(relations[relations$subject == mdId, 'object'], equals(id1))
 })
 
@@ -109,8 +109,8 @@ test_that("InsertRelationship methods work", {
   expect_that(nrow(relations), equals(4))
   expect_that(relations[relations$object == doId1, 'subject'], equals(mdId))
   expect_that(relations[relations$object == doId2, 'subject'], equals(mdId))
-  expect_that(relations[relations$subject == mdId, 'predicate'], matches('documents'))
-  expect_that(relations[relations$subject == doId1, 'predicate'], matches('isDocumentedBy'))
+  expect_match(relations[relations$subject == mdId, 'predicate'], 'documents')
+  expect_match(relations[relations$subject == doId1, 'predicate'], 'isDocumentedBy')
   rm(dp)
   
   # Now test the second 'insertRelationships' that allows specifying the predicate of the relationship
@@ -127,9 +127,9 @@ test_that("InsertRelationship methods work", {
   
   # Test invalid argument values
   err <- try(dp <- insertRelationship(dp, subjectID=doId1, objectIDs=doId2, predicate="http://www.w3.org/ns/prov#wasDerivedFrom", subjectType='literal'), silent=TRUE)
-  expect_that(class(err), (matches("try-error")))
+  expect_match(class(err), ("try-error"))
   err <- try(dp <- insertRelationship(dp, subjectID=doId1, objectIDs=doId2, predicate="http://www.w3.org/ns/prov#wasDerivedFrom", objectType='foo'), silent=TRUE)
-  expect_that(class(err), (matches("try-error")))
+  expect_match(class(err), ("try-error"))
   
   nrel <- 1
   # Insert a typical provenance relationship
@@ -137,7 +137,7 @@ test_that("InsertRelationship methods work", {
   # Test if the data frame with retrieved relationships was constructed correctly
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel))
-  expect_that(relations[relations$subject == doId1, 'predicate'], matches("wasDerivedFrom"))
+  expect_match(relations[relations$subject == doId1, 'predicate'], "wasDerivedFrom")
   expect_that(relations[relations$subject == doId1, 'object'], equals(doId2))
   expect_that(relations[relations$subject == doId1, 'subjectType'], equals(as.character(NA)))
   expect_that(relations[relations$subject == doId1, 'objectType'], equals(as.character(NA)))
@@ -147,8 +147,8 @@ test_that("InsertRelationship methods work", {
                      subjectType="uri", objectType="literal")  
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel <- nrel + 1))
-  expect_that(relations[relations$subject == "orcid.org/0000-0002-2192-403X", 'predicate'], matches("hadHome"))
-  expect_that(relations[relations$subject == "orcid.org/0000-0002-2192-403X", 'object'], matches("www.example.com/home"))
+  expect_match(relations[relations$subject == "orcid.org/0000-0002-2192-403X", 'predicate'], "hadHome")
+  expect_match(relations[relations$subject == "orcid.org/0000-0002-2192-403X", 'object'], "www.example.com/home")
   expect_that(relations[relations$subject == "orcid.org/0000-0002-2192-403X", 'subjectType'], equals("uri"))
   expect_that(relations[relations$subject == "orcid.org/0000-0002-2192-403X", 'objectType'], equals("literal"))
   
@@ -157,8 +157,8 @@ test_that("InsertRelationship methods work", {
                      objectTypes=c("literal", "literal"))
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel<-nrel + 3))
-  expect_that(relations[relations$object == "thing1", 'predicate'], matches("hadThing"))
-  expect_that(relations[relations$object == "thing1", 'subject'], matches("_:bl1"))
+  expect_match(relations[relations$object == "thing1", 'predicate'], "hadThing")
+  expect_match(relations[relations$object == "thing1", 'subject'], "_:bl1")
   expect_that(relations[relations$object == "thing1", 'subjectType'], equals("blank"))
   expect_that(relations[relations$object == "thing1", 'objectType'], equals("literal"))
   expect_that(relations[relations$object == "thing2", 'subjectType'], equals("blank"))
@@ -177,17 +177,17 @@ test_that("InsertRelationship methods work", {
   dp <- insertRelationship(dp, subjectID=as.character(NA), objectIDs="thing6", predicate="http://www.myns.org/wasThing", objectTypes="literal")
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel<-nrel + 1))
-  expect_that(relations[relations$object == "thing6", 'predicate'], matches("wasThing"))
+  expect_match(relations[relations$object == "thing6", 'predicate'], "wasThing")
   expect_that(relations[relations$object == "thing6", 'subjectType'], equals("blank"))
-  expect_that(relations[relations$object == "thing6", 'subject'], matches("_:"))
+  expect_match(relations[relations$object == "thing6", 'subject'], "_:")
   
   # No objectID specified
   dp <- insertRelationship(dp, subjectID="urn:uuid5678", objectIDs=as.character(NA), predicate="http://www.myns.org/gaveThing")
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel <- nrel + 1))
-  expect_that(relations[relations$subject == "urn:uuid5678", 'predicate'], matches("gaveThing"))
+  expect_match(relations[relations$subject == "urn:uuid5678", 'predicate'], "gaveThing")
   expect_that(relations[relations$subject == "urn:uuid5678", 'objectType'], equals("blank"))
-  expect_that(relations[relations$subject == "urn:uuid5678", 'object'], matches("_:"))
+  expect_match(relations[relations$subject == "urn:uuid5678", 'object'], "_:")
   
   # Specify dataTypeURIs
   dp <- insertRelationship(dp, subjectID="urn:uuid:abcd", objectIDs="Wed Mar 18 06:26:44 PDT 2015", 
@@ -196,21 +196,24 @@ test_that("InsertRelationship methods work", {
                      dataTypeURIs="http://www.w3.org/2001/XMLSchema#string")
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel <- nrel + 1))
-  expect_that(relations[relations$subject == "urn:uuid:abcd", 'dataTypeURI'], matches("string"))
+  expect_match(relations[relations$subject == "urn:uuid:abcd", 'dataTypeURI'], "string")
   expect_that(relations[relations$subject == "urn:uuid:abcd", 'subjectType'], equals("uri"))
   expect_that(relations[relations$subject == "urn:uuid:abcd", 'objectType'], equals("literal"))
-  expect_that(relations[relations$subject == "urn:uuid:abcd", 'predicate'], matches("startedAt"))
+  expect_match(relations[relations$subject == "urn:uuid:abcd", 'predicate'], "startedAt")
 
+  rm(dp)
+  dp <- new("DataPackage")
   # Insert derivation relationships
   source <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1"
   derived <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.45.1"
-  recordDerivation(dp, sourceID=source, derivedIDs=derived)
+  dp <- suppressWarnings(recordDerivation(dp, sourceID=source, derivedIDs=derived))
   relations <- getRelationships(dp, quiet=quietOn)
   
   # Test if the data frame with retrieved relationships was constructed correctly
-  expect_that(nrow(relations), equals(nrel <- nrel + 1))
-  expect_that(relations[relations$subject == derived, 'predicate'], matches("wasDerivedFrom"))
-  expect_that(relations[relations$subject == derived, 'object'], equals(source))
+  expect_that(nrow(relations), equals(3))
+  expect_that(nrow(relations[relations$object == datapack:::provONEdata,]), equals(2))
+  expect_match(relations[relations$predicate == datapack:::provWasDerivedFrom, 'subject'], derived)
+  expect_equal(relations[relations$predicate == datapack:::provWasDerivedFrom, 'object'], source)
 })
 
 test_that("Package serialization works", {
@@ -364,3 +367,172 @@ test_that("BagIt serialization works", {
  expect_that(file.info(bagitFile)[['size']] > 0, is_true())
 
 }) 
+
+test_that("Adding provenance relationships to a DataPackage via describeWorkflow works", {
+    
+    library(datapack)
+    # 
+    # Test describeWorkflow using DataObject ids
+    dp <- new("DataPackage")
+    inIds <- list()
+    outIds <- list()
+    # Add the program object to the package
+    doProg <- new("DataObject", format="application/R", 
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
+                  suggestedFilename="logit-regression-example.R")
+    progId <- getIdentifier(doProg)
+    dp <- addData(dp, doProg)
+    # Add the input object to the package
+    doIn <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
+                suggestedFilename="binary.csv")
+    inIds[[length(inIds)+1]] <- getIdentifier(doIn)
+    dp <- addData(dp, doIn)
+    # Add the output object to the package
+    doOut <- new("DataObject", format="image/png", 
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
+                 suggestedFilename="gre-predicted.png")
+    outIds[[length(outIds)+1]] <- getIdentifier(doOut)
+    dp <- addData(dp, doOut)
+    # Add the provenenace relationships for the script execution, using ids for 'sources, program, derivation' arguments
+    dp <- describeWorkflow(dp, sources=inIds, program=progId, derivations=outIds)
+    # Test if the data frame with retrieved relationships was constructed correctly
+    relations <- getRelationships(dp, quiet=quietOn)
+    execId <- relations[relations$object == datapack:::provONEexecution,'subject']
+    expect_match(relations[relations$predicate == datapack:::provWasGeneratedBy,'subject'], getIdentifier(doOut))
+    expect_match(relations[relations$predicate == datapack:::provUsed,'object'], getIdentifier(doIn))
+    expect_match(relations[relations$predicate == datapack:::provWasGeneratedBy,'object'], execId)
+    expect_match(relations[relations$predicate == datapack:::provUsed,'subject'], execId)
+    expect_match(relations[relations$predicate == datapack:::provHadPlan,'object'], progId)
+    expect_match(relations[relations$predicate == datapack:::provWasDerivedFrom,'subject'], getIdentifier(doOut))
+    expect_match(relations[relations$predicate == datapack:::provWasDerivedFrom,'object'], getIdentifier(doIn))
+   
+    # 
+    # Now do the same test passing DataObjects to describeWorkflow
+    rm(dp)
+    dp <- new("DataPackage")
+    inputs <- list()
+    outputs <- list()
+    doProg <- new("DataObject", format="application/R", 
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
+                  suggestedFilename="logit-regression-example R script")
+    dp <- addData(dp, doProg)
+    progId <- getIdentifier(doProg)
+    doIn <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
+                suggestedFilename="binary.csv")
+    dp <- addData(dp, doIn)
+    inputs[[length(inputs)+1]] <- doIn
+    doOut <- new("DataObject", format="image/png", 
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
+                 suggestedFilename="gre-predicted.png")
+    dp <- addData(dp, doOut)
+    outputs[[length(outputs)+1]] <- doOut
+    dp <- describeWorkflow(dp, sources=inputs, program=doProg, derivations=outputs)
+    relations <- getRelationships(dp, quiet=quietOn)
+    execId <- relations[relations$object == datapack:::provONEexecution,'subject']
+    expect_match(relations[relations$predicate == datapack:::provWasGeneratedBy,'subject'], getIdentifier(doOut))
+    expect_match(relations[relations$predicate == datapack:::provUsed,'object'], getIdentifier(doIn))
+    expect_match(relations[relations$predicate == datapack:::provWasGeneratedBy,'object'], execId)
+    expect_match(relations[relations$predicate == datapack:::provUsed,'subject'], execId)
+    expect_match(relations[relations$predicate == datapack:::provHadPlan,'object'], progId) 
+    expect_match(relations[relations$predicate == datapack:::provWasDerivedFrom,'subject'], getIdentifier(doOut))
+    expect_match(relations[relations$predicate == datapack:::provWasDerivedFrom,'object'], getIdentifier(doIn))
+    
+    #
+    # Now do the same test without the R script, so that only 'prov:wasDerivedFrom' between inputs
+    # and outputs will be inserted.
+    rm(dp)
+    dp <- new("DataPackage")
+    inputs <- list()
+    outputs <- list()
+    doIn <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
+                suggestedFilename="binary.csv")
+    dp <- addData(dp, doIn)
+    inputs[[length(inputs)+1]] <- doIn
+    doOut <- new("DataObject", format="image/png", 
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
+                 suggestedFilename="gre-predicted.png")
+    dp <- addData(dp, doOut)
+    outputs[[length(outputs)+1]] <- doOut
+    dp <- describeWorkflow(dp, sources=inputs, derivations=outputs)
+    relations <- getRelationships(dp, quiet=quietOn)
+    expect_match(relations[relations$predicate == datapack:::provWasDerivedFrom,'subject'], getIdentifier(doOut))
+    expect_match(relations[relations$predicate == datapack:::provWasDerivedFrom,'object'], getIdentifier(doIn))
+    
+    #
+    # Now do the same test without the inputs so that 'prov:used' are not inserted, but other
+    # relationships are.
+    rm(dp)
+    dp <- new("DataPackage")
+    inputs <- list()
+    outputs <- list()
+    doProg <- new("DataObject", format="application/R", 
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
+                  suggestedFilename="logit-regression-example R script")
+    dp <- addData(dp, doProg)
+    progId <- getIdentifier(doProg)
+    doOut <- new("DataObject", format="image/png", 
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
+                 suggestedFilename="gre-predicted.png")
+    dp <- addData(dp, doOut)
+    outputs[[length(outputs)+1]] <- doOut
+    dp <- describeWorkflow(dp, program=doProg, derivations=outputs)
+    relations <- getRelationships(dp, quiet=quietOn)
+    execId <- relations[relations$object == datapack:::provONEexecution,'subject']
+    expect_match(relations[relations$predicate == datapack:::provWasGeneratedBy,'subject'], getIdentifier(doOut))
+    expect_match(relations[relations$predicate == datapack:::provWasGeneratedBy,'object'], execId)
+    expect_match(relations[relations$predicate == datapack:::provHadPlan,'object'], progId) 
+    
+    #
+    # Now do the same test without the outputs so that 'prov:generqtedBy' are not inserted, but other
+    # relationships are.
+    rm(dp)
+    dp <- new("DataPackage")
+    inputs <- list()
+    doProg <- new("DataObject", format="application/R", 
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
+                  suggestedFilename="logit-regression-example R script")
+    dp <- addData(dp, doProg)
+    progId <- getIdentifier(doProg)
+
+    doIn <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
+                suggestedFilename="binary.csv")
+    dp <- addData(dp, doIn)
+    inputs[[length(inputs)+1]] <- doIn
+    dp <- describeWorkflow(dp, sources=inputs, program=doProg)
+    relations <- getRelationships(dp, quiet=quietOn)
+    expect_match(relations[relations$subject == getIdentifier(doIn),'object'], 'Data')
+    execId <- relations[relations$object == datapack:::provONEexecution,'subject']
+    expect_match(relations[relations$predicate == datapack:::provUsed,'object'], getIdentifier(doIn))
+    expect_match(relations[relations$predicate == datapack:::provUsed,'subject'], execId)
+    expect_match(relations[relations$predicate == datapack:::provHadPlan,'object'], progId) 
+    
+    # 
+    # Test if passing only inputs fails
+    err <- try(dp <- describeWorkflow(dp, sources=inputs), silent=TRUE)
+    expect_match(class(err), "try-error")
+    # Test if passing only outputs fails
+    err <- try(dp <- describeWorkflow(dp, derivations=outputs), silent=TRUE)
+    expect_match(class(err), "try-error")
+    # Test if passing only program fails
+    err <- try(dp <- describeWorkflow(dp, program=doProg), silent=TRUE)
+    expect_match(class(err), "try-error")
+    
+    # Test prov:wasDerivedFrom with pids that are not package members
+    rm(dp)
+    dp <- new("DataPackage")
+    # Insert derivation relationships
+    source <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1"
+    derived <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.45.1"
+    dp <- suppressWarnings(recordDerivation(dp, sourceID=source, derivedIDs=derived))
+    relations <- getRelationships(dp, quiet=quietOn)
+    
+    # Test if the data frame with retrieved relationships was constructed correctly
+    expect_that(nrow(relations), equals(3))
+    expect_that(nrow(relations[relations$object == datapack:::provONEdata,]), equals(2))
+    expect_equal(relations[relations$predicate == datapack:::provWasDerivedFrom, 'subject'], derived)
+    expect_equal(relations[relations$predicate == datapack:::provWasDerivedFrom, 'object'], source)
+})

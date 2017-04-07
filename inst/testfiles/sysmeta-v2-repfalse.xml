@@ -16,7 +16,7 @@
       <permission>read</permission>
     </allow>
   </accessPolicy>
-  <replicationPolicy replicationAllowed="true" numberReplicas="2"/>
+  <replicationPolicy replicationAllowed="false" numberReplicas="0"/>
   <archived>false</archived>
   <dateUploaded>2015-08-24T22:19:33.523+00:00</dateUploaded>
   <dateSysMetadataModified>2015-08-25T14:54:44.593+00:00</dateSysMetadataModified>

@@ -18,11 +18,28 @@
 #   limitations under the License.
 #
 
-#' A class representing a data package, which can contain data objects
-#' @description The DataPackage class provides methods for added and extracting
-#' data objects from a datapackage. The contents of a package
-#' can be determined and the package can be prepared for transport before being
-#' uploaded to a data repository or archived.
+#' @title A class representing a data package
+#' @description The DataPackage class provides methods for adding and extracting
+#' data objects from a data package. The contents of a data package
+#' can include arbitrary types of objects, including data files, program code,
+#' visualizations and images, animations, and any other type of file. The DataPackage class
+#' stores the individual members of the data package along with key system-level metadata
+#' about each object, including its size, checksum, identifier, and other key information
+#' needed to effectively archive the members of the package.  In addition, the
+#' DataPackage class can include key provenance metadata about the relationships among
+#' the objects in the data package.  For example, the data package can document that one object
+#' provides documentation for another (\code{cito:documents}), and that one object was
+#' derived from another (\code{prov:wasDerivedFrom}) by executing a program that 
+#' used source data (\code{prov:used}) to create a derived data object 
+#' {\code{prov:wasGeneratedBy}}.  These relationships are integral to the data package,
+#' and can be visualized by programs that understand the ProvONE provenance 
+#' model (see \url{https://purl.dataone.org/provone-v1-dev}). 
+#' 
+#' The DataPackage class is an R representation of an underlying Open Archives 
+#' Initiative ORE model (Object Reuse and Exchange; 
+#' see \url{https://www.openarchives.org/ore/}), and follows the DataONE Data
+#' Packaging model
+#' (see \url{https://releases.dataone.org/online/api-documentation-v2.0.1/design/DataPackage.html}).
 #' @include dmsg.R
 #' @include DataObject.R
 #' @include SystemMetadata.R
@@ -30,30 +47,32 @@
 #' @rdname DataPackage-class
 #' @aliases DataPackage-class
 #' @slot relations A hash containing provenance relationships of package objects
-#' @slot objects A hash containing identifiers for data object in the DataPackage
+#' @slot objects A hash containing identifiers for objects in the DataPackage
 #' @slot sysmeta A SystemMetadata class instance describing the package
+#' @slot externalIds A list containing identifiers for objects associated with the DataPackage
 #' @section Methods:
 #' \itemize{
 #'  \item{\code{\link[=DataPackage-initialize]{initialize}}}{: Initialize a DataPackage object}
 #'  \item{\code{\link{getData}}}{: Get the data content of a specified data object}
-#'  \item{\code{\link{getSize}}}{: Get the Count of Objects in the Package}
-#'  \item{\code{\link{getIdentifiers}}}{: Get the Identifiers of Package Members}
+#'  \item{\code{\link{getSize}}}{: Get the Count of Objects in the DataPackage}
+#'  \item{\code{\link{getIdentifiers}}}{: Get the Identifiers of DataPackage members}
 #'  \item{\code{\link{addData}}}{: Add a DataObject to the DataPackage}
-#'  \item{\code{\link{insertRelationship}}}{: Record relationships of objects in a DataPackage}
-#'  \item{\code{\link{recordDerivation}}}{: Record derivation relationships between objects in a DataPackage}
-#'  \item{\code{\link{getRelationships}}}{: Retrieve relationships of package objects}
-#'  \item{\code{\link{containsId}}}{: Returns true if the specified object is a member of the package}
-#'  \item{\code{\link{removeMember}}}{: Remove the Specified Member from the Package}
-#'  \item{\code{\link{getMember}}}{: Return the Package Member by Identifier}
-#'  \item{\code{\link{serializePackage}}}{: Create an OAI-ORE resource map from the package}
+#'  \item{\code{\link{insertRelationship}}}{: Insert relationships between objects in a DataPackage}
+#'  \item{\code{\link{getRelationships}}}{: Retrieve relationships of data package objects}
+#'  \item{\code{\link{containsId}}}{: Returns true if the specified object is a member of the data package}
+#'  \item{\code{\link{removeMember}}}{: Remove the Specified Member from the DataPackage}
+#'  \item{\code{\link{getMember}}}{: Return the DataPackage Member by Identifier}
+#'  \item{\code{\link{serializePackage}}}{: Create an OAI-ORE resource map from the data package}
 #'  \item{\code{\link{serializeToBagIt}}}{: Serialize A DataPackage into a BagIt Archive File}
+#'  \item{\code{\link{describeWorkflow}}}{: Add data derivation information to a DataPackage}
 #' }
 #' @seealso \code{\link{datapack}}
 #' @export
 setClass("DataPackage", slots = c(
     relations               = "hash",
     objects                 = "hash",          # key=identifier, value=DataObject
-    sysmeta                 = "SystemMetadata" # system metadata about the package
+    sysmeta                 = "SystemMetadata", # system metadata about the package
+    externalIds             = "list"
     )
 )
 
@@ -90,6 +109,7 @@ setMethod("initialize", "DataPackage", function(.Object, packageId) {
     }
     .Object@relations = hash()
     .Object@objects = hash()
+    .Object@externalIds = list()
    return(.Object)
 })
 
@@ -347,13 +367,15 @@ setMethod("insertRelationship", signature("DataPackage"),
 #' specification, namely, "http://www.w3.org/ns/prov#wasDerivedFrom"
 #' @param x a DataPackage object
 #' @param ... Additional parameters
-#' @examples
+#' @examples \dontrun{
 #' dp <- new("DataPackage")
-#' recordDerivation(dp, "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1",
-#'                      "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.45.1")
+#' recordDerivation(dp, "doi:1234/_030MXTI009R00_20030812.40.1", 
+#'                  "doi:1234/_030MXTI009R00_20030812.45.1")
+#'                      }
 #' @seealso \code{\link{DataPackage-class}}
 #' @export
 setGeneric("recordDerivation", function(x, ...) {
+    .Deprecated("describeWorkflow", "datapack")
     standardGeneric("recordDerivation")
 })
 
@@ -361,9 +383,7 @@ setGeneric("recordDerivation", function(x, ...) {
 #' @param sourceID the identifier of the source object in the relationship
 #' @param derivedIDs an identifier or list of identifiers of objects that were derived from the source 
 setMethod("recordDerivation",  signature("DataPackage"), function(x, sourceID, derivedIDs, ...) {
-    for (obj in derivedIDs) {
-        insertRelationship(x, subjectID=obj, objectIDs=sourceID, predicate="http://www.w3.org/ns/prov#wasDerivedFrom")
-    }
+    describeWorkflow(x, sources=sourceID, derivations=derivedIDs, ...)
 })
 
 #' Retrieve relationships of package objects
@@ -379,6 +399,7 @@ setGeneric("getRelationships", function(x, ...) {
 })
 
 #' @rdname getRelationships
+#' @param condense A logical value, if TRUE then a more easily viewed version of ralationships are returned.
 #' @examples
 #' dp <- new("DataPackage")
 #' insertRelationship(dp, "/Users/smith/scripts/genFields.R",
@@ -386,7 +407,7 @@ setGeneric("getRelationships", function(x, ...) {
 #'     "https://knb.ecoinformatics.org/knb/d1/mn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1")
 #' rels <- getRelationships(dp)
 #' @export
-setMethod("getRelationships", signature("DataPackage"), function(x, ...) {
+setMethod("getRelationships", signature("DataPackage"), function(x, condense=F, ...) {
   
   # Get the relationships stored by insertRelationship
   if (has.key("relations", x@relations)) {
@@ -399,7 +420,41 @@ setMethod("getRelationships", signature("DataPackage"), function(x, ...) {
       relationships <- data.frame()
   }
     
-  return(relationships)
+    if(nrow(relationships) > 0 && condense) {
+        consoleWidth <- getOption("width")
+        if(is.na(consoleWidth)) consoleWidth <- 80
+        paddingWidth <- 10
+        nColumns <- 3
+        # Set the max column width according to the current console width,
+        # leave enough room for 3 columsn with padding, etc.
+        # Note: this is only an approximation, as the columns may take less
+        # width that this.
+        maxColumnWidth <- as.integer((consoleWidth-paddingWidth)/nColumns)
+        condensedRels <- apply(relationships, c(1,2), function(term) {
+            #cat(sprintf("item: %s\n", item))
+            if(is.na(term)) return(term)
+            for(ins in 1:nrow(knownNamespaces)) {
+                ns <- knownNamespaces[ins, 'namespace']
+                prefix <- knownNamespaces[ins, 'prefix']
+                # use namespace in term
+                if(grepl(ns, term, fixed=T)) {
+                    return(condenseStr(sub(ns, paste(prefix, ':', sep=""), term), maxColumnWidth))
+                }
+            }
+            # Didn't match any known namespace, check if the item is a package member identifier,
+            # and use the source filename if it exists.
+            if(is.element(term, getIdentifiers(x))) {
+                fn <- x@objects[[term]]@filename
+                if(!is.na(fn)) {
+                   term <- basename(fn)
+                }
+            }
+            return(condenseStr(term, maxColumnWidth))
+        })
+        return(as.data.frame(condensedRels[,1:3]))
+    }
+    
+ return(relationships)
 })
 
 #' Returns true if the specified object is a member of the package
@@ -528,7 +583,7 @@ setGeneric("serializePackage", function(x, ...) {
 #' data2 <- charToRaw("7,8,9\n10,11,12")
 #' do2 <- new("DataObject", id="do2", dataobj=data2, format="text/csv", user="jsmith")
 #' dp <- addData(dp, do2)
-#' recordDerivation(dp, "do", "do2")
+#' dp <- describeWorkflow(dp, sources=do, derivations=do2)
 #' \dontrun{
 #' td <- tempdir()
 #' status <- serializePackage(dp, file=paste(td, "resmap.json", sep="/"), syntaxName="json",  
@@ -561,7 +616,8 @@ setMethod("serializePackage", signature("DataPackage"), function(x, file,
   
   # Create a resource map from previously stored triples, for example, from the relationships in a DataPackage
   resMap <- new("ResourceMap", id)
-  resMap <- createFromTriples(resMap, relations=relations, identifiers=getIdentifiers(x), resolveURI=resolveURI)  
+  resMap <- createFromTriples(resMap, relations=relations, identifiers=getIdentifiers(x), resolveURI=resolveURI, 
+                              externalIdentifiers=x@externalIds)  
   status <- serializeRDF(resMap, file, syntaxName, mimeType, namespaces, syntaxURI)
   freeResourceMap(resMap)
   rm(resMap)
@@ -610,7 +666,7 @@ setGeneric("serializeToBagIt", function(x, ...) {
 #' do2 <- new("DataObject", id="do2", dataobj=data2, format="text/csv", user="jsmith")
 #' dp <- addData(dp, do2)
 #' # Create a relationship between the two data objects
-#' recordDerivation(dp, "do2", "do2")
+#' dp <- describeWorkflow(dp, sources="do2", derivations="do2")
 #' # Write out the data package to a BagIt file
 #' \dontrun{
 #' bagitFile <- serializeToBagIt(dp, syntaxName="json", mimeType="application/json")
@@ -761,3 +817,304 @@ setMethod("serializeToBagIt", signature("DataPackage"), function(x, mapId=as.cha
   # Return the zip filename
   return(zipFile)
 })
+
+#' @title Add data derivation information to a DataPackage
+#' @description Add information about the relationships among DataObject members 
+#' in a DataPackage, retrospectively describing the way in which derived data were 
+#' created from source data using a processing program such as an R script.  These provenance
+#' relationships allow the derived data to be understood sufficiently for users
+#' to be able to reproduce the computations that created the derived data, and to
+#' trace lineage of the derived data objects. The method \code{describeWorkflow} 
+#' will add provenance relationships between a script that was executed, the files 
+#' that it used as sources, and the derived files that it generated.
+#' @details This method operates on a DataPackage that has had DataObjects for 
+#' the script, data sources (inputs), and data derivations (outputs) previously 
+#' added to it, or can reference identifiers for objects that exist in other DataPackage
+#' instances. This allows a user to create a standalone package that contains all of
+#' its source, script, and derived data, or a set of data packages that are chained
+#' together via a set of derivation relationships between the members of those packages.
+#' 
+#' Provenance relationships are described following the the ProvONE data model, which
+#' can be viewed at \url{https://purl.dataone.org/provone-v1-dev}.  In particular, 
+#' the following relationships are inserted (among others):
+#' \itemize{
+#'  \item{\code{prov:used}} {indicates which source data was used by a program execution}
+#'  \item{\code{prov:generatedBy}} {indicates which derived data was created by a program execution}
+#'  \item{\code{prov:wasDerivedFrom}} {indicates the source data from which derived data were created using the program}
+#' }
+#'   
+#' @param x The \code{DataPackage} to add provenance relationships to.
+#' @param ... Additional parameters
+setGeneric("describeWorkflow", function(x, ...) {
+    standardGeneric("describeWorkflow")
+})
+
+#' @rdname describeWorkflow
+#' @param sources A list of DataObjects for files that were read by the program. Alternatively, a list 
+#' of DataObject identifiers can be specified as a list of character strings.
+#' @param program The DataObject created for the program such as an R script. Alternatively the DataObject identifier can
+#' be specified. 
+#' @param derivations A list of DataObjects for files that were generated by the program. Alternatively, a list 
+#' of DataObject identifiers can be specified as a list of character strings.
+#' @seealso The R 'recordr' package for run-time recording of provenance relationships.
+#' @import uuid
+#' @import utils
+#' @export
+#' @examples
+#' library(datapack)
+#' dp <- new("DataPackage")
+#' # Add the script to the DataPackage
+#' progFile <- system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack")
+#' progObj <- new("DataObject", format="application/R", filename=progFile)
+#' dp <- addData(dp, progObj)
+#' 
+#' # Add a script input to the DataPackage
+#' inFile <- system.file("./extdata/pkg-example/binary.csv", package="datapack") 
+#' inObj <- new("DataObject", format="text/csv", filename=inFile)
+#' dp <- addData(dp, inObj)
+#' 
+#' # Add a script output to the DataPackage
+#' outFile <- system.file("./extdata/pkg-example/gre-predicted.png", package="datapack")
+#' outObj <- new("DataObject", format="image/png", file=outFile)
+#' dp <- addData(dp, outObj)
+#' 
+#' # Add the provenenace relationshps, linking the input and output to the script execution
+#' # Note: 'sources' and 'derivations' can also be lists of "DataObjects" or "DataObject' identifiers
+#' dp <- describeWorkflow(dp, sources = inObj, program = progObj, derivations = outObj) 
+#' # View the results
+#' head(getRelationships(dp))
+setMethod("describeWorkflow", signature("DataPackage"), function(x, sources=list(), 
+                                                                  program=as.character(NA), 
+                                                                  derivations=list(), ...) {
+    
+    # Check each "source" list member and check if it is the correct type, either
+    # DataObject or character (for DataObject id). Build a list of member ids for
+    # use later.
+    inIds <- list()
+    # Special case, if the user passed in a single DataObject for sources or derivations,
+    # convert it to a list to facilitate easier processing in tests below.
+    if(class(sources) == "DataObject") sources <- list(sources)
+    if(class(derivations) == "DataObject") derivations <- list(derivations)
+    
+    # Warn user if they haven't provided enough info to insert any prov relationships
+    if(missing(program)) {
+        if(length(sources) == 0) {
+            stop("Both arguments \"program\" and \"sources\" are missing.")
+        }
+        if(length(derivations) == 0) {
+            stop("Both arguments \"program\" and \"derivations\" are missing.")
+        }
+    } else {
+        # Program was specified, but no inputs, outputs
+        if(length(sources) == 0 && length(derivations) == 0) {
+            stop("Argument \"program\" is specified, but both \"sources\" and \"derivations\" are missing.")
+        }
+    }
+    
+    if(length(sources) > 0) {
+        for (isrc in 1:length(sources)) {
+            obj <- sources[[isrc]]
+            if(class(obj) == "DataObject") {
+                inIds[[length(inIds)+1]] <- getIdentifier(obj)
+            } else if (class(obj) == "character") {
+                inIds[[length(inIds)+1]] <- obj
+            } else {
+                stop(sprintf("Invalid type \'%s\' for source[[%s]]", class(obj), isrc))
+            }
+        }
+    }
+    # Check each "derivation" list member and check if it is the correct type, either
+    # DataObject or character (for DataObject id). Build a list of member ids for use
+    # later.
+    # Special case, if the user passed in a single DataObject for inputs, stick it in 
+    # a list.
+    outIds <- list()
+    if(length(derivations) > 0) {
+        for (idst in 1:length(derivations)) {
+            obj <- derivations[[idst]]
+            if(class(obj) == "DataObject") {
+                outIds[[length(outIds)+1]] <- getIdentifier(obj)
+            } else if (class(obj) == "character") {
+                outIds[[length(outIds)+1]] <- obj
+            } else {
+                stop(sprintf("Invalid type \'%s\' for derivations[[%s]]", class(obj), idst))
+            }
+        }
+    }
+    
+    if(class(program) == "DataObject") {
+        scriptId <- getIdentifier(program)
+    } else if (class(program) == "character") {
+        if(!is.na(program)) {
+            scriptId <- program
+        } else {
+            scriptId <- as.character(NA)
+        }
+    } else {
+        stop(sprintf("Invalid type \'%s\' for program", class(program)))
+    }
+    # Check that pids are in the data package
+    pkgIds <- getIdentifiers(x)
+    if(!is.na(scriptId)) {
+        if(!is.element(scriptId, pkgIds)) {
+            stop(sprintf("Argument \'program\'is not a package memmber."))
+        }
+    }
+    # Process inputs and outputs separately from the program identifier, as there may not
+    # have been a program specified.
+    if(length(inIds) > 0) {
+        for (iCnt in 1:length(inIds)) {
+            pid <- inIds[[iCnt]]
+            # This pid is not a package member, so add it to the list of external pids
+            if (!is.element(pid, pkgIds)) {
+                x@externalIds[[length(x@externalIds)+1]] <- pid
+            }
+            x <- insertRelationship(x, subjectID=pid, objectIDs=provONEdata, predicate=rdfType, objectTypes="uri")
+        }
+    }
+    if(length(outIds) > 0) {
+        for (iCnt in 1:length(outIds)) {
+            pid <- outIds[[iCnt]]
+            # This pid is not a package member, so add it to the list of external pids
+            if (!is.element(pid, pkgIds)) {
+                x@externalIds[[length(x@externalIds)+1]] <- pid
+            }
+            x <- insertRelationship(x, subjectID=pid, objectIDs=provONEdata, predicate=rdfType, objectTypes="uri")
+        }
+    }
+    # If a program argument was not specified, then just record derivations from the inputs to the
+    # outputs
+    if(!is.na(scriptId)) {
+        # The script identifier must be for the local package, it is not supported to specify
+        # a script from another package using this method, primarily because it is the identifier of the Execution
+        # object that is required to establish the relationships "executionPid -> prov:used -> dataPid" and 
+        # "dataPid -> wasGeneratedBy -> executionPid". We do not know the Execution id for the scriptId, which
+        # is needed to set the other relationships required for indexing.
+        if(grepl("\\s*https?:.*", scriptId, perl=T)) {
+            stop(sprintf("The \"program\" parameter must specify an identifier that is a member of the current package.\nThe identifier %s is not valid", scriptId))
+        }
+            
+        # Currently we have to have a prov:execution associated with each R script, so that metacatui will
+        # render the used and gen files with the R script, via the qualified association and hadPlan, OK!
+        executionId <- sprintf("urn:uuid:%s", UUIDgenerate())
+        # Qualified association to link the execution and each of the program (plan)
+        associationId <- sprintf("_:%s", UUIDgenerate())
+        
+        planId <- scriptId
+        # Qualified association
+        # Subject id of NA will cause a random blank node identifier to be produced
+        x <- insertRelationship(x, subjectID=executionId, objectIDs=associationId, predicate=provQualifiedAssociation, objectTypes="blank")
+        # Execution rdf type
+        x <- insertRelationship(x, subjectID=executionId, objectIDs=provONEexecution, predicate=rdfType, objectTypes="uri")
+        # prov:hadPlan
+        x <- insertRelationship(x, subjectID=associationId, objectIDs=planId, predicate=provHadPlan, subjectType="blank", objectTypes="uri")
+        # prov rdf type declaration for association
+        x <- insertRelationship(x, subjectID=associationId, objectIDs=provAssociation, predicate=rdfType, subjectType="blank", objectTypes="uri")
+        # prov rdf type declaration for program
+        x <- insertRelationship(x, subjectID=planId, objectIDs=provONEprogram, predicate=rdfType, objectType="uri") 
+        # The dataone::uploadDataPackage() method will create a dcterms:indentifier for every object that is in the DataPackage. 
+        x <- insertRelationship(x, subjectID=executionId, objectIDs=executionId, predicate=DCidentifier, objectTypes="literal", dataTypeURIs=xsdStringURI)
+        
+        # Process files used by the script
+        if(length(inIds) > 0) {
+            for (iCnt in 1:length(inIds)) {
+                thisPid <- inIds[[iCnt]]
+                # Record prov:used relationship between the input dataset and the execution
+                x <- insertRelationship(x, subjectID=executionId, objectIDs=thisPid, predicate=provUsed)
+            }
+        }
+        
+        # Process files generated by the script
+        if(length(outIds) > 0) {
+            for (iCnt in 1:length(outIds)) {
+                thisPid <- outIds[[iCnt]]
+                # Record prov:wasGeneratedBy relationship between the output dataset and the execution
+                x <- insertRelationship(x, subjectID=thisPid, objectIDs=executionId, predicate=provWasGeneratedBy)
+            }
+        }
+    }
+    
+    # Record the 'prov:wasDerivedFrom' relationships, directly linking the output files to the input files.
+    # This section can be run even if a 'program' argument is not defined.
+    if(length(outIds) > 0 && length(inIds) > 0) {
+        for (iOut in 1:length(outIds)) {
+            outputId <- outIds[[iOut]]
+            for (iIn in 1:length(inIds)) {
+                inputId <- inIds[[iIn]]
+                x <- insertRelationship(x, subjectID=outputId, objectIDs=inputId, predicate=provWasDerivedFrom)
+            }
+        }
+    }
+    return(x)
+})
+
+setMethod("show", "DataPackage",
+    #function(object)print(rbind(x = object@x, y=object@y))
+    function(object) {
+        ids <- getIdentifiers(object)
+              
+        identifierWidth <- 10
+        formatIdWidth <- 15
+        submitterWidth <- 15
+        rightsHolderWidth <- 15
+        mediaTypeWidth <- 15
+        fileNameWidth <- 20
+        sizeWidth <- 10
+        fmt <- paste("%-", sprintf("%2d", identifierWidth), "s ",
+            "%-", sprintf("%2d", formatIdWidth), "s ",
+            "%-", sprintf("%2d", submitterWidth), "s ",
+            "%-", sprintf("%2d", rightsHolderWidth), "s ",
+            "%-", sprintf("%2d", mediaTypeWidth), "s ",
+            "%-", sprintf("%2d", fileNameWidth), "s ",
+            "%-", sprintf("%2d", sizeWidth), "s ",
+            "\n", sep="")
+        if(length(ids) > 0) {
+            cat(sprintf("Members:\n\n"))
+            cat(sprintf(fmt, "identifier", "format", "submitter", "rightsHolder", "mediaType", "filename", "size"))
+            lapply(ids, function(id) { cat(sprintf(fmt, 
+                                                   condenseStr(object@objects[[id]]@sysmeta@identifier, identifierWidth),
+                                                   condenseStr(object@objects[[id]]@sysmeta@formatId, formatIdWidth),
+                                                   condenseStr(object@objects[[id]]@sysmeta@submitter, submitterWidth),
+                                                   condenseStr(object@objects[[id]]@sysmeta@rightsHolder, rightsHolderWidth),
+                                                   condenseStr(object@objects[[id]]@sysmeta@mediaType, mediaTypeWidth),
+                                                   condenseStr(object@objects[[id]]@sysmeta@fileName, fileNameWidth),
+                                                   condenseStr(object@objects[[id]]@sysmeta@size, sizeWidth)))
+            }
+            )
+        } else {
+            cat(sprintf("This package does not contain any DataObjects:\n"))
+        }
+
+        relationships <- getRelationships(object, condense=TRUE)
+        if(nrow(relationships) > 0) {
+          cat(sprintf("\nRelationships:\n\n"))
+          show(relationships)
+        } else {
+          cat(sprintf("\nThis package doesn not contain any provenance relationships."))  
+        }
+    }
+)
+
+# Return a shortened version of a string to the specified length. The
+# beginning and end of the string is returned, with ellipses inbetween
+# to denote the removed portion, e.g. 
+#    condenseStr("/Users/smith/data/urn:uuid:a84c2234-d07f-41d6-8c53-61b570afc79f.csv", 30)
+#    "/Users/smith...1b570afc79f.csv"
+condenseStr <- function(inStr, newLength) {
+    if(is.na(inStr)) return(inStr)
+    strLen <- nchar(inStr)[[1]]
+    if(newLength >= strLen) return(inStr)
+    # Requested length too short, so return first part of string
+    if(newLength < 5) return(substr(inStr, 1, newLength))
+    # Substract space for ellipses
+    charLen <- as.integer(newLength - 3)
+    # Get str before ellipses
+    len1 <- as.integer(charLen / 2)
+    # Add additional char at end if desired length is odd
+    len2 <- as.integer(charLen / 2) + charLen %% 2
+    # Get str after ellipses
+    str1 <- substr(inStr, 1, len1)
+    str2 <- substr(inStr, strLen-(len2-1), strLen)
+    newStr <- sprintf("%s...%s", str1, str2)
+    return(newStr)
+}

@@ -13,26 +13,32 @@ rawData <- getData(myObj)
 #  write.csv(rawToChar(rawData), tf, quote=F, row.names=F)
 
 ## ------------------------------------------------------------------------
-id <- getIdentifier(myObj)
+df <- read.csv(textConnection(rawToChar(rawData)))
+head(df)
 
 ## ------------------------------------------------------------------------
-formatType <- getFormatId(myObj)
+getIdentifier(myObj)
+
+## ------------------------------------------------------------------------
+getFormatId(myObj)
 
 ## ------------------------------------------------------------------------
 str(myObj@sysmeta)
 
 ## ------------------------------------------------------------------------
 myObj <- setPublicAccess(myObj)
+myObj@sysmeta@accessPolicy
 
 ## ------------------------------------------------------------------------
-myObj <- addAccessRule(myObj, "uid=smith,ou=Account,dc=example,dc=com", "write")
+myObj <- addAccessRule(myObj, "http://orcid.org/0000-0003-0077-4738", "write")
+myObj@sysmeta@accessPolicy
 
 ## ------------------------------------------------------------------------
 accessRules <- data.frame(subject=c("uid=jsmith,o=Account,dc=example,dc=com",  
                                     "uid=jadams,o=Account,dc=example,dc=org"), 
                           permission=c("write", "changePermission"))
 myObj <- addAccessRule(myObj, accessRules)
-str(myObj@sysmeta@accessPolicy)
+myObj@sysmeta@accessPolicy
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  library(dataone)
@@ -48,9 +54,9 @@ csvfile <- system.file("extdata/sample-data.csv", package="datapack")
 sciId <- "sciId1"
 sciObj <- new("DataObject", id=sciId, format="text/csv", filename=csvfile)
 
-data <- charToRaw("1,2,3\n4,5,6\n")
+outFile <- system.file("extdata/sample-data-filtered.csv", package="datapack")
 sciId2 <- "sciId2"
-sciObj2 <- new("DataObject", id=sciId2, data, format="text/csv")
+sciObj2 <- new("DataObject", id=sciId2, filename=outFile, format="text/csv")
 
 ## ------------------------------------------------------------------------
 myid <- paste("urn:uuid:", UUIDgenerate(), sep="")
@@ -75,23 +81,43 @@ sciObjRaw <- getData(dp, sciId)
 mySciObj <- getMember(dp, sciId)
 
 ## ------------------------------------------------------------------------
-dp <- insertRelationship(dp, subjectID=metadataId, objectIDs=sciId)
-
-## ------------------------------------------------------------------------
-relations <- getRelationships(dp)
-relations[,1:3]
-
-## ------------------------------------------------------------------------
 dp <- addData(dp, do = sciObj2, mo = metadataObj)
+getRelationships(dp, condense=TRUE)
 
 ## ------------------------------------------------------------------------
-relations <- getRelationships(dp)
-# Print just the first relationship for clarity, without the type information columns
-relations[,1:3]
+dp <- new("DataPackage")
+
+# This DataObject contains the program script that was executed
+progObj <- new("DataObject", format="application/R", 
+           filename=system.file("extdata/pkg-example/logit-regression-example.R", package="datapack"),
+           suggestedFilename="logit-regression-example.R")
+dp <- addData(dp, progObj)
+
+doIn <- new("DataObject", format="text/csv", 
+             filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
+             suggestedFilename="binary.csv")
+dp <- addData(dp, doIn)
+
+doOut <- new("DataObject", format="image/png", 
+             filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
+             suggestedFilename="gre-predicted.png")
+dp <- addData(dp, doOut)
+
+# The arguments "sources" and "derivations" can also contain lists of "DataObjects"
+dp <- describeWorkflow(dp, sources=doIn, program=progObj, derivations=doOut)
+rels <- getRelationships(dp, condense=TRUE)
+rels[grepl("prov:", rels$predicate),]
+
+## ------------------------------------------------------------------------
+dp <- insertRelationship(dp, subjectID=metadataId, objectIDs=sciId)
+relations <- getRelationships(dp, condense=TRUE)
+relations[grepl("cito:documents", relations$predicate),]
 
 ## ---- eval=F-------------------------------------------------------------
 #  dp <- insertRelationship(dp, subjectID=sciId2, objectIDs=sciId,
 #                     predicate="http://www.w3.org/ns/prov#wasDerivedFrom")
+#  relations <- getRelationships(dp, condense=TRUE)
+#  relations[grepl("prov:wasDerivedFrom", relations$predicate),]
 
 ## ---- eval=FALSE---------------------------------------------------------
 #  tf <- tempfile()

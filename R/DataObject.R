@@ -110,6 +110,7 @@ setClass("DataObject", slots = c(
 #' @param seriesId A unique string to identifier the latest of multiple revisions of the object.
 #' @param mediaType The When specified, indicates the IANA Media Type (aka MIME-Type) of the object. The value should include the media type and subtype (e.g. text/csv).
 #' @param suggestedFilename A suggested filename to use when this object is serialized. If not specified, defaults to the basename of the filename parameter.
+#' @param mediaTypeProperty A list, indicates IANA Media Type properties to be associated with the parameter \code{"mediaType"}
 #' @import digest
 #' @examples
 #' data <- charToRaw("1,2,3\n4,5,6\n")
@@ -118,7 +119,7 @@ setClass("DataObject", slots = c(
 #' @seealso \code{\link{DataObject-class}}
 setMethod("initialize", "DataObject", function(.Object, id=as.character(NA), dataobj=NA, format=as.character(NA), user=as.character(NA), 
                                                mnNodeId=as.character(NA), filename=as.character(NA), seriesId=as.character(NA),
-                                               mediaType=as.character(NA), suggestedFilename=as.character(NA)) {
+                                               mediaType=as.character(NA), suggestedFilename=as.character(NA), mediaTypeProperty=list()) {
   
     # If no value has been passed in for 'id', then create a UUID for it.
     if (class(id) != "SystemMetadata" && is.na(id)) {
@@ -163,7 +164,8 @@ setMethod("initialize", "DataObject", function(.Object, id=as.character(NA), dat
         # to serialze to v1 format which does not include seriesId, mediaType, fileName.
         .Object@sysmeta <- new("SystemMetadata", identifier=id, formatId=format, size=size, submitter=user, rightsHolder=user, 
                                checksum=sha1, originMemberNode=mnNodeId, authoritativeMemberNode=mnNodeId, 
-                               seriesId=seriesId, mediaType=mediaType, fileName=suggestedFilename)
+                               seriesId=seriesId, mediaType=mediaType, fileName=suggestedFilename, 
+                               mediaTypeProperty=mediaTypeProperty)
         if (!is.na(dataobj[[1]])) { 
             .Object@data <- dataobj
         }
@@ -353,3 +355,65 @@ setMethod("canRead", signature("DataObject"), function(x, subject) {
     canRead <- hasAccessRule(x@sysmeta, "public", "read") | hasAccessRule(x@sysmeta, subject, "read")
 	return(canRead)
 })
+
+setMethod("show", "DataObject",
+          #function(object)print(rbind(x = object@x, y=object@y))
+          function(object) {
+              consoleWidth <- getOption("width")
+              if(is.na(consoleWidth)) consoleWidth <- 80
+              nameWidth <- 25
+              valueWidth <- 30
+              colWidth <- as.integer((consoleWidth - 5)/2)
+              
+              fmt <- paste("%-", sprintf("%2d", nameWidth), "s ", ": ",
+                           "%-", sprintf("%2d", valueWidth), "s ",
+                           "\n", sep="")
+              fmt2 <- paste("%-", sprintf("%2d", colWidth), "s ",
+                           "%-", sprintf("%2d", colWidth), "s ",
+                           "\n", sep="")
+              cat(sprintf("Access\n"))
+              cat(sprintf(fmt, "  identifer", object@sysmeta@identifier))
+              cat(sprintf(fmt, "  submitter", object@sysmeta@submitter))
+              cat(sprintf(fmt, "  rightHolder", object@sysmeta@rightsHolder))
+              cat(sprintf("  access policy:\n"))
+              if(nrow(object@sysmeta@accessPolicy) > 0) {
+                  cat(sprintf(fmt2, "    subject", "permission"))
+                  for(irow in 1:nrow(object@sysmeta@accessPolicy)) {
+                      subject <- object@sysmeta@accessPolicy[irow, 'subject']
+                      permission <- object@sysmeta@accessPolicy[irow, 'permission']
+                      cat(sprintf(fmt2, condenseStr(paste("    ", subject, sep=""), colWidth), permission))
+                  }
+              } else {
+                 cat(sprintf("\t\tNo access policy defined\n")) 
+              }
+              cat(sprintf("Physical\n"))
+              cat(sprintf(fmt, "  suggested fileName", object@sysmeta@fileName))
+              cat(sprintf(fmt, "  formatId", object@sysmeta@formatId))
+              cat(sprintf(fmt, "  mediaType", object@sysmeta@mediaType))
+              cat(sprintf(fmt, "  mediaTypeProperty", object@sysmeta@mediaTypeProperty))
+              cat(sprintf(fmt, "  size", object@sysmeta@size))
+              cat(sprintf(fmt, "  checksum", object@sysmeta@checksum))
+              cat(sprintf(fmt, "  checksumAlgorithm", object@sysmeta@checksumAlgorithm))
+              cat(sprintf("System\n"))
+              cat(sprintf(fmt, "  seriesId", object@sysmeta@seriesId))
+              cat(sprintf(fmt, "  serialVersion", object@sysmeta@serialVersion))
+              cat(sprintf(fmt, "  replicationAllowed", object@sysmeta@replicationAllowed))
+              cat(sprintf(fmt, "  numberReplicas", object@sysmeta@numberReplicas))
+              cat(sprintf(fmt, "  preferredNodes", object@sysmeta@preferredNodes))
+              cat(sprintf(fmt, "  blockedNodes", object@sysmeta@blockedNodes))
+              cat(sprintf(fmt, "  obsoletes", object@sysmeta@obsoletes))
+              cat(sprintf(fmt, "  obsoletedBy", object@sysmeta@obsoletedBy))
+              cat(sprintf(fmt, "  archived", object@sysmeta@archived))
+              cat(sprintf(fmt, "  dateUploaded", object@sysmeta@dateUploaded))
+              cat(sprintf(fmt, "  dateSysMetadataModified", object@sysmeta@dateSysMetadataModified))
+              cat(sprintf(fmt, "  originMemberNode", object@sysmeta@originMemberNode))
+              cat(sprintf(fmt, "  authoritativeMemberNode", object@sysmeta@authoritativeMemberNode))
+              cat(sprintf("Data\n"))
+              if(!is.na(object@filename)) {
+                cat(sprintf(fmt, "  filename", object@filename))
+              } else {
+                cat("  ", class(object@data), ": ", head(object@data), " ...\n")
+              }
+          }
+)
+          
