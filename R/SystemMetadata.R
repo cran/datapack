@@ -46,7 +46,7 @@
 #' @slot authoritativeMemberNode value of type \code{"character"}, the node identifier of the node which currently is authoritative for the object.
 #' @slot seriesId value of type \code{"character"}, a unique Unicode string that identifies an object revision chain. A seriesId will resolve to the latest version of an object.
 #' @slot mediaType value of type \code{"character"}, the IANA Media Type (aka MIME-Type) of the object, e.g. "text/csv".
-#' @slot fileName value of type \code{"character"}, a suggested file name for the object.
+#' @slot fileName value of type \code{"character"}, the name of the file to create when this object is downloaded from DataONE. 
 #' @slot mediaTypeProperty value of type a \code{"list"} of \code{"character"}, IANA Media Type properties for the \code{"mediaType"} argument
 #' @section Methods:
 #' \itemize{
@@ -118,7 +118,7 @@ setClass("SystemMetadata", slots = c(
 #' @param authoritativeMemberNode value of type \code{"character"}, the node identifier of the node which currently is authoritative for the object.
 #' @param seriesId value of type \code{"character"}, a unique Unicode string that identifies an object revision chain. A seriesId will resolve to the latest version of an object.
 #' @param mediaType value of type \code{"character"}, the IANA Media Type (aka MIME-Type) of the object, e.g. "text/csv".
-#' @param fileName value of type \code{"character"}, a suggested file name for the object (if the object containing this sysmeta is serialized).
+#' @param fileName value of type \code{"character"}, the name of the file to create when this object is downloaded from DataONE.
 #' @param mediaTypeProperty value of type a \code{"list"} of \code{"character"}, IANA Media Type properties for the \code{"mediaType"} argument
 #' @return the SystemMetadata instance representing an object
 #' @seealso \url{https://releases.dataone.org/online/api-documentation-v2.0/apis/Types.html}
@@ -364,7 +364,9 @@ setMethod("serializeSystemMetadata", signature("SystemMetadata"), function(x, ve
                   namespace=d1Namespace,
                   namespaceDefinitions = d1NamespaceDef)
 
-  root <- addChildren(root, xmlNode("serialVersion", x@serialVersion))
+  if(!is.na(x@serialVersion)) {
+      root <- addChildren(root, xmlNode("serialVersion", x@serialVersion))
+  }
   root <- addChildren(root, xmlNode("identifier", x@identifier))
   root <- addChildren(root, xmlNode("formatId", x@formatId))
   root <- addChildren(root, xmlNode("size", format(as.numeric(x@size), scientific=FALSE)))
@@ -403,11 +405,13 @@ setMethod("serializeSystemMetadata", signature("SystemMetadata"), function(x, ve
   if (!is.na(x@obsoletedBy)) {
     root <- addChildren(root, xmlNode("obsoletedBy", x@obsoletedBy))
   }
-  root <- addChildren(root, xmlNode("archived", tolower(as.character(x@archived))))
+  if(!is.na(x@archived)) {
+    root <- addChildren(root, xmlNode("archived", tolower(as.character(x@archived))))
+  }
   # Serialize this optional field if it is defined
   if(!is.na(x@dateUploaded)) root <- addChildren(root, xmlNode("dateUploaded", x@dateUploaded))
-  root <- addChildren(root, xmlNode("dateSysMetadataModified", x@dateSysMetadataModified))
-  root <- addChildren(root, xmlNode("originMemberNode", x@originMemberNode))
+  if(!is.na(x@dateSysMetadataModified)) root <- addChildren(root, xmlNode("dateSysMetadataModified", x@dateSysMetadataModified))
+  if(!is.na(x@originMemberNode)) root <- addChildren(root, xmlNode("originMemberNode", x@originMemberNode))
   if(!is.na(x@authoritativeMemberNode)) {
     root <- addChildren(root, xmlNode("authoritativeMemberNode", x@authoritativeMemberNode))
   }
@@ -473,8 +477,12 @@ setGeneric("addAccessRule", function(x, ...) {
 })
 #' @rdname addAccessRule
 #' @param y The subject of the rule to be added, or a data frame of subject/permission tuples
-#' @return the SystemMetadata object with the updated access policy.
+#' @details If the \code{y} argument is specified as a character string containing a \code{subject},
+#' then an optional \code{permission} parameter must be specified, that contains a character list
+#' specifying the permissions to add for each \code{subject}.
+#' @return The SystemMetadata object with the updated access policy.
 #' @examples 
+#' # Add an access rule to a SystemMetadata access policy.
 #' # Parameter "y" can be character string containing the subject of the access rule:
 #' sysmeta <- new("SystemMetadata")
 #' sysmeta <- addAccessRule(sysmeta, "uid=smith,ou=Account,dc=example,dc=com", "write")
@@ -512,12 +520,78 @@ setMethod("addAccessRule", signature("SystemMetadata"), function(x, y, ...) {
   return(x)
 })
 
-#' @title Determine if a particular access rules exists within SystemMetadata.
+#' @title Remove an access rule from the specified object.
+#' @description Remove access rules from the access policy of the specified object.
+#' @param x The object instance to which to remove the rule
+#' @param ... Additional arguments
+#' \itemize{
+#'   \item{permission The permission to be remove to subject if x is character (read, write, changePermission)}
+#' }
+#' @seealso \code{\link{SystemMetadata-class}}
+#' @export
+setGeneric("removeAccessRule", function(x, ...) {
+    standardGeneric("removeAccessRule")
+})
+#' @rdname removeAccessRule
+#' @param y The subject of the rule to be removed, or a data.frame containing access rules.
+#' @param permission THe permission to remove, if parameter \code{x} is a character string containing a \code{subject}.
+#' @return The SystemMetadata object with the updated access policy.
+#' @examples 
+#' #
+#' # Remove access rules from a SystemMetadata object.
+#' # Parameter "y" can be character string containing the subject of the access rule:
+#' sysmeta <- new("SystemMetadata")
+#' sysmeta <- addAccessRule(sysmeta, "uid=smith,ou=Account,dc=example,dc=com", "write")
+#' sysmeta <- addAccessRule(sysmeta, "uid=smith,ou=Account,dc=example,dc=com", "changePermission")
+#' sysmeta <- removeAccessRule(sysmeta, "uid=smith,ou=Account,dc=example,dc=com", "changePermission")
+#' 
+#' # Alternatively, parameter "y" can be a data.frame containing one or more access rules:
+#' # Add write, changePermission for uid=jones,...
+#' sysmeta <- addAccessRule(sysmeta, "uid=jones,ou=Account,dc=example,dc=com", "write")
+#' sysmeta <- addAccessRule(sysmeta, "uid=jones,ou=Account,dc=example,dc=com", "changePermission")
+#' # Now take privs for uid=jones,... away
+#' accessRules <- data.frame(subject=c("uid=jones,ou=Account,dc=example,dc=com", 
+#'                                      "uid=jones,ou=Account,dc=example,dc=com"), 
+#'                                      permission=c("write", "changePermission"))
+#' sysmeta <- removeAccessRule(sysmeta, accessRules)
+#' @export
+setMethod("removeAccessRule", signature("SystemMetadata"), function(x, y, ...) {
+    if(class(y) == "data.frame") {
+        if(nrow(y) == 0) return(x)
+        for(i in 1:nrow(y)) {
+            # Use some temp vars to make the data.frame subset more legible
+            subject <- as.character(y[i, 'subject'])
+            permission <- as.character(y[i, 'permission'])
+            ap <- x@accessPolicy
+            # Subset, removing the row with the subject and rule
+            x@accessPolicy <- ap[!(ap$subject==subject & ap$permission==permission),]
+        }
+    } else if (class(y) == "character") {
+        argList <- list(...)
+        argListLen <- length(argList)
+        # Check for "permission" as named argument, i.e. 'permission="write"'
+        if (!"permission" %in% names(argList)) {
+            if(argListLen < 1) {
+                stop("A \"permission\" argument is missing")
+            } else {
+                # Permission is an unnamed argument, so get it's value from the position in the argument list
+                permission <- argList[[1]]
+            }
+        } else {
+            permission <- argList$permission
+        }
+        ap <- x@accessPolicy
+        subject <- y
+        x@accessPolicy <- ap[!(ap$subject==subject & ap$permission==permission),]
+    }
+    return(x)
+})
+
+#' @title Determine if an access rules exists 
 #' @description Each SystemMetadata document may contain a set of (subject, permission) tuples
 #' that represent the access rules for its associated object. This method determines
 #' whether a particular access rule already exists within the set.
-#' @param x the SystemMetadata instance to which to add the rules
-#' @param subject the subject of the rule to be checked
+#' @param x the object to check for presence of the access rule.
 #' @param ... Additional arguments
 #' @return A logical value: if TRUE the access rule was found, if FALSE it was not found.
 #' @seealso \code{\link{SystemMetadata-class}}
@@ -526,8 +600,11 @@ setGeneric("hasAccessRule", function(x, ...) {
     standardGeneric("hasAccessRule")
 })
 #' @rdname hasAccessRule
-#' @param permission the permission to be applied to subject if x is character
+#' @param subject of the rule to be checked
+#' @param permission the permission to be checked
 #' @examples 
+#' #
+#' # Check access rules for a SystemMetadata object.
 #' sysmeta <- new("SystemMetadata")
 #' sysmeta <- addAccessRule(sysmeta, "uid=smith,ou=Account,dc=example,dc=com", "write")
 #' accessRules <- data.frame(subject=c("uid=smith,ou=Account,dc=example,dc=com", 
@@ -535,9 +612,11 @@ setGeneric("hasAccessRule", function(x, ...) {
 #' sysmeta <- addAccessRule(sysmeta, accessRules)
 #' ruleExists <- hasAccessRule(sysmeta, subject="uid=smith,ou=Account,dc=example,dc=com", 
 #'   permission="write")
-#' @return boolean TRUE if the access rule exists already, FALSE otherwise
+#' @return When called for SystemMetadata, boolean TRUE if the access rule exists already, FALSE otherwise
 setMethod("hasAccessRule", signature("SystemMetadata"), function(x, subject, permission) {
-    found <- any(grepl(subject, x@accessPolicy$subject) & grepl(permission, x@accessPolicy$permission))
+    # The match for subject and permission must be exact and the entire string must match.
+    found <- any(grepl(paste("^", subject,"$",sep=""), x@accessPolicy$subject) & 
+                     grepl(paste("^", permission, "$",sep=""), x@accessPolicy$permission))
     return(found)
 })
 
@@ -554,6 +633,7 @@ setGeneric("clearAccessPolicy", function(x, ...) {
 #' @rdname clearAccessPolicy
 #' @return The SystemMetadata object with the cleared access policy.
 #' @examples 
+#' # Clear access policy for a SystemMetadata object.
 #' sysmeta <- new("SystemMetadata")
 #' sysmeta <- addAccessRule(sysmeta, "uid=smith,ou=Account,dc=example,dc=com", "write")
 #' sysmeta <- clearAccessPolicy(sysmeta)
@@ -570,7 +650,7 @@ setMethod("clearAccessPolicy", signature("SystemMetadata"), function(x, ...) {
 
 defaultUTCDate <- function(date=NULL) {
     if (is.null(date) || is.na(date)) {
-        ct <- format(Sys.time(), format="%FT%H:%M:%SZ", tz="UTC")
+        ct <- format.POSIXct(Sys.time(), format="%FT%H:%M:%SZ", tz="GMT", usetz=FALSE)
         return(ct)
     } else {
         return(date)

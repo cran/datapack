@@ -13,8 +13,7 @@ vignette: >
 
 The *datapack* R package provides an abstraction for collating multile data 
 objects of different types and metadata describing those objects into a bundle that can be transported and loaded using a single composite file.  It is primarily meant as
-a container to bundle together files for transport to or from data repositories
-that support the [DataONE Data Package model](https://releases.dataone.org/online/api-documentation-v2.0.1/design/DataPackage.html), including the member repositories in the [DataONE Federation](https://dataone.org).
+a container to bundle together files for transport to or from DataONE data repositories.
 
 The methods in this package provide a convenient way to load data from common repositories 
 such as DataONE into the R environment, and to document, serialize, and save data from R to 
@@ -120,7 +119,7 @@ myObj <- addAccessRule(myObj, accessRules)
 myObj@sysmeta@accessPolicy
 ```
 
-The *dataone* R package can be used to upload or download DataObjecs to a DataONE Member Node.
+The *dataone* R package can be used to upload or download DataObjects to a DataONE Member Node.
 Please see the web page for the [*dataone*](http://github.com/DataONEorg/rdataone) R package and the
 vignettes for more information:
 
@@ -246,18 +245,15 @@ dp <- new("DataPackage")
 
 # This DataObject contains the program script that was executed
 progObj <- new("DataObject", format="application/R", 
-           filename=system.file("extdata/pkg-example/logit-regression-example.R", package="datapack"),
-           suggestedFilename="logit-regression-example.R")
+           filename=system.file("extdata/pkg-example/logit-regression-example.R", package="datapack"))
 dp <- addData(dp, progObj)
 
 doIn <- new("DataObject", format="text/csv", 
-             filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
-             suggestedFilename="binary.csv")
+             filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
 dp <- addData(dp, doIn)
 
 doOut <- new("DataObject", format="image/png", 
-             filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
-             suggestedFilename="gre-predicted.png")
+             filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
 dp <- addData(dp, doOut)
 
 # The arguments "sources" and "derivations" can also contain lists of "DataObjects"

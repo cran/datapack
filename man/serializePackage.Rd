@@ -12,7 +12,7 @@ serializePackage(x, ...)
   syntaxName = "rdfxml", mimeType = "application/rdf+xml",
   namespaces = data.frame(namespace = character(), prefix = character(),
   stringsAsFactors = FALSE), syntaxURI = as.character(NA),
-  resolveURI = as.character(NA))
+  resolveURI = as.character(NA), creator = as.character(NA))
 }
 \arguments{
 \item{x}{A DataPackage object}
@@ -33,9 +33,11 @@ to the DataPackage when it was created.}
 \item{syntaxURI}{URI of the serialization syntax}
 
 \item{resolveURI}{A character string containing a URI to prepend to datapackage identifiers}
+
+\item{creator}{A \code{character} string containing the creator of the package.}
 }
 \description{
-The Datapackage is serialized as a OAI-ORE resource map to the specified file.
+The DataPackage is serialized as a OAI-ORE resource map to the specified file.
 }
 \details{
 The resource map that is created is serialized by default as RDF/XML. Other serialization formats
@@ -60,10 +62,10 @@ If no resolveURI value is specified, then 'https://cn.dataone.org/cn/v1/resolve'
 dp <- new("DataPackage")
 data <- charToRaw("1,2,3\\n4,5,6")
 do <- new("DataObject", id="do1", dataobj=data, format="text/csv", user="jsmith")
-dp <- addData(dp, do)
+dp <- addMember(dp, do)
 data2 <- charToRaw("7,8,9\\n10,11,12")
 do2 <- new("DataObject", id="do2", dataobj=data2, format="text/csv", user="jsmith")
-dp <- addData(dp, do2)
+dp <- addMember(dp, do2)
 dp <- describeWorkflow(dp, sources=do, derivations=do2)
 \dontrun{
 td <- tempdir()

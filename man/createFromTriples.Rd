@@ -9,7 +9,8 @@
 createFromTriples(x, ...)
 
 \S4method{createFromTriples}{ResourceMap}(x, relations, identifiers,
-  resolveURI = as.character(NA), externalIdentifiers = list(), ...)
+  resolveURI = as.character(NA), externalIdentifiers = list(),
+  creator = as.character(NA), ...)
 }
 \arguments{
 \item{x}{a ResourceMap}
@@ -23,6 +24,8 @@ createFromTriples(x, ...)
 \item{resolveURI}{A character string containing a URI to prepend to datapackage identifiers.}
 
 \item{externalIdentifiers}{A list of indentifiers that are referenced from the package, but are not package members.}
+
+\item{creator}{A \code{character} string containing the creator of the package.}
 }
 \description{
 RDF relationships are added to a ResourceMap object from a data.frame that
@@ -43,8 +46,8 @@ dp <- new("DataPackage")
 data <- charToRaw("1,2,3\\n4,5,6")
 do1 <- new("DataObject", id="id1", data, format="text/csv")
 do2 <- new("DataObject", id="id2", data, format="text/csv")
-dp <- addData(dp, do1)
-dp <- addData(dp, do2)
+dp <- addMember(dp, do1)
+dp <- addMember(dp, do2)
 dp <- insertRelationship(dp, subjectID="id1", objectIDs="id2", 
   predicate="http://www.w3.org/ns/prov#wasDerivedFrom")
 relations <- getRelationships(dp)

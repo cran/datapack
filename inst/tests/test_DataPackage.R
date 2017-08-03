@@ -14,7 +14,7 @@ test_that("datapack initialization works", {
   mnId <- "urn:node:mnSandboxUCSB2"
   dp <- new("DataPackage")
   sciObj <- new("DataObject", format="text/csv", user="uid=slaughter,ou=Account,dc=ecoinformatics,dc=org", mnNodeId=mnId, filename=csvfile)
-  dp <- addData(dp, sciObj)
+  dp <- addMember(dp, sciObj)
   ids <- getIdentifiers(dp)
   expect_equal(length(ids), 1)
   rm(dp)
@@ -36,7 +36,7 @@ test_that("datapack methods work", {
     expect_that(class(dpkg)[[1]], equals("DataPackage"))
     expect_that(getSize(dpkg), equals(0))
     do <- new("DataObject", id1, data, format, user, node)
-    dpkg <- addData(dpkg, do)
+    dpkg <- addMember(dpkg, do)
     expect_that(getSize(dpkg), equals(1))
     expect_that(getIdentifiers(dpkg)[[1]], equals(id1))
     expect_that(containsId(dpkg, id1), equals(TRUE))
@@ -49,7 +49,7 @@ test_that("datapack methods work", {
     expect_match(class(do), "DataObject")
     expect_match(getIdentifier(do), id1)
     do2 <- new("DataObject", id2, data, format, user, node)
-    dpkg <- addData(dpkg, do2)
+    dpkg <- addMember(dpkg, do2)
     expect_that(getSize(dpkg), equals(2))
     expect_that(getIdentifiers(dpkg)[[1]], equals(id1))
     expect_that(getIdentifiers(dpkg)[[2]], equals(id2))
@@ -69,14 +69,14 @@ test_that("datapack methods work", {
     md <- new("DataObject", mdId, data, format, user, node)
     # The 'mdId' parameter indicates that this is a metadata object that is
     # to be associated with the 'id1' parameter
-    #dpkg <- addData(dpkg, md)
+    #dpkg <- addMember(dpkg, md)
     do <- new("DataObject", id1, data, format, user, node)
-    dpkg <- addData(dpkg, do, md)
+    dpkg <- addMember(dpkg, do, md)
     expect_that(getSize(dpkg), equals(2))
     expect_that(containsId(dpkg, id1), equals(TRUE))
     expect_that(containsId(dpkg, mdId), equals(TRUE))
     
-    # Test that the addData() function adds the 'documents' relationship if a metadata object is 
+    # Test that the addMember() function adds the 'documents' relationship if a metadata object is 
     # specified
     relations <- getRelationships(dpkg)
     expect_match(relations[relations$subject == id1, 'predicate'], "isDocumentedBy")
@@ -100,8 +100,8 @@ test_that("InsertRelationship methods work", {
   do2 <- new("DataObject", id=doId2, data, format, user, node)
   mdId <- "md1"
   md1 <- new("DataObject", id=mdId, data, format="eml://ecoinformatics.org/eml-2.1.1", user, node)
-  dp <- addData(dp, do1)
-  dp <- addData(dp, do2)
+  dp <- addMember(dp, do1)
+  dp <- addMember(dp, do2)
   
   dp <- insertRelationship(dp, subjectID=mdId, objectIDs=c(doId1, doId2))
   relations <- getRelationships(dp, quiet=quietOn)
@@ -120,10 +120,10 @@ test_that("InsertRelationship methods work", {
   user <- "smith"
   data <- charToRaw("1,2,3\n4,5,6")
   format <- "text/csv"
-  do1 <- new("DataObject", id=doId1, data, format, user, node)
+  do1 <- new("DataObject", id=doId1, data, format)
   do2 <- new("DataObject", id=doId2, data, format, user, node)
-  dp <- addData(dp, do1)
-  dp <- addData(dp, do2)
+  dp <- addMember(dp, do1)
+  dp <- addMember(dp, do2)
   
   # Test invalid argument values
   err <- try(dp <- insertRelationship(dp, subjectID=doId1, objectIDs=doId2, predicate="http://www.w3.org/ns/prov#wasDerivedFrom", subjectType='literal'), silent=TRUE)
@@ -153,12 +153,12 @@ test_that("InsertRelationship methods work", {
   expect_that(relations[relations$subject == "orcid.org/0000-0002-2192-403X", 'objectType'], equals("literal"))
   
   # Test that an unspecified objectType (where length(objetIDs) > length(objectTypes)) is set to as.character(NA)
-  dp <- insertRelationship(dp, subjectID="_:bl1", objectIDs=c("thing1", "thing2", "thing3"), predicate="http://www.myns.org/hadThing", subjectType="blank",
+  dp <- insertRelationship(dp, subjectID="urn:uuid:6186b15c-0a4b-4338-a091-1ea68d0fb72d", objectIDs=c("thing1", "thing2", "thing3"), predicate="http://www.myns.org/hadThing", subjectType="blank",
                      objectTypes=c("literal", "literal"))
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel<-nrel + 3))
   expect_match(relations[relations$object == "thing1", 'predicate'], "hadThing")
-  expect_match(relations[relations$object == "thing1", 'subject'], "_:bl1")
+  expect_match(relations[relations$object == "thing1", 'subject'], "urn:uuid:6186b15c-0a4b-4338-a091-1ea68d0fb72d")
   expect_that(relations[relations$object == "thing1", 'subjectType'], equals("blank"))
   expect_that(relations[relations$object == "thing1", 'objectType'], equals("literal"))
   expect_that(relations[relations$object == "thing2", 'subjectType'], equals("blank"))
@@ -166,7 +166,7 @@ test_that("InsertRelationship methods work", {
   expect_that(relations[relations$object == "thing3", 'objectType'], equals(as.character(NA)))
   
   # Multiple objectTypes, first one 'NA'
-  dp <- insertRelationship(dp, subjectID="_:bl2", objectIDs=c("thing4", "thing5"), predicate="http://www.myns.org/hadThing", subjectType="blank",
+  dp <- insertRelationship(dp, subjectID="urn:uuid:ea00e863-861b-4253-9ed5-1c0568ee2373", objectIDs=c("thing4", "thing5"), predicate="http://www.myns.org/hadThing", subjectType="blank",
                      objectTypes=c(NA, "literal"))
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel<-nrel + 2))
@@ -179,15 +179,13 @@ test_that("InsertRelationship methods work", {
   expect_that(nrow(relations), equals(nrel<-nrel + 1))
   expect_match(relations[relations$object == "thing6", 'predicate'], "wasThing")
   expect_that(relations[relations$object == "thing6", 'subjectType'], equals("blank"))
-  expect_match(relations[relations$object == "thing6", 'subject'], "_:")
   
   # No objectID specified
-  dp <- insertRelationship(dp, subjectID="urn:uuid5678", objectIDs=as.character(NA), predicate="http://www.myns.org/gaveThing")
+  dp <- insertRelationship(dp, subjectID="urn:uuid:5743f16c-e038-4ef2-bcca-0418ff631a34", objectIDs=as.character(NA), predicate="http://www.myns.org/gaveThing")
   relations <- getRelationships(dp, quiet=quietOn)
   expect_that(nrow(relations), equals(nrel <- nrel + 1))
-  expect_match(relations[relations$subject == "urn:uuid5678", 'predicate'], "gaveThing")
-  expect_that(relations[relations$subject == "urn:uuid5678", 'objectType'], equals("blank"))
-  expect_match(relations[relations$subject == "urn:uuid5678", 'object'], "_:")
+  expect_match(relations[relations$subject == "urn:uuid:5743f16c-e038-4ef2-bcca-0418ff631a34", 'predicate'], "gaveThing")
+  expect_that(relations[relations$subject == "urn:uuid:5743f16c-e038-4ef2-bcca-0418ff631a34", 'objectType'], equals("blank"))
   
   # Specify dataTypeURIs
   dp <- insertRelationship(dp, subjectID="urn:uuid:abcd", objectIDs="Wed Mar 18 06:26:44 PDT 2015", 
@@ -206,7 +204,8 @@ test_that("InsertRelationship methods work", {
   # Insert derivation relationships
   source <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1"
   derived <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.45.1"
-  dp <- suppressWarnings(recordDerivation(dp, sourceID=source, derivedIDs=derived))
+  # Keep recordDerivations in unit tests until v 1.3.0, when it may be marked as defunct
+  suppressWarnings(dp <- recordDerivation(dp, sourceID=source, derivedIDs=derived))
   relations <- getRelationships(dp, quiet=quietOn)
   
   # Test if the data frame with retrieved relationships was constructed correctly
@@ -232,10 +231,10 @@ test_that("Package serialization works", {
   md1 <- new("DataObject", id=mdId, data, format="eml://ecoinformatics.org/eml-2.1.1", user, node)
   doIn <- new("DataObject", id=doInId, data, format, user, node)
   doOut <- new("DataObject", id=doOutId, data, format, user, node)
-  dp <- addData(dp, md1)
+  dp <- addMember(dp, md1)
   expect_match(class(dp), "DataPackage")
-  dp <- addData(dp, doIn)
-  dp <- addData(dp, doOut)
+  dp <- addMember(dp, doIn)
+  dp <- addMember(dp, doOut)
   
   # Insert metadata document <-> relationships
   dp <- insertRelationship(dp, subjectID=mdId, objectIDs=c(doOutId))
@@ -291,7 +290,7 @@ test_that("Package serialization works with minimal DataPackage", {
     data <- charToRaw("1,2,3\n4,5,6")
     format <- "text/csv"
     md1 <- new("DataObject", id=mdId, data, format="eml://ecoinformatics.org/eml-2.1.1")
-    dp <- addData(dp, md1)
+    dp <- addMember(dp, md1)
     expect_match(class(dp), "DataPackage")
     
     # Serialize the ResourceMap to a file.
@@ -306,6 +305,10 @@ test_that("Package serialization works with minimal DataPackage", {
     rels <- getRelationships(dp)
     expect_equal(nrow(rels), 0)
 })
+
+
+
+
 
 test_that("BagIt serialization works", {
   
@@ -346,9 +349,9 @@ test_that("BagIt serialization works", {
   md1 <- new("DataObject", id=mdId, dataobj=charToRaw(someEML), format="eml://ecoinformatics.org/eml-2.1.1", user=user, mnNodeId=node)
   doIn <- new("DataObject", id=doInId, dataobj=data, format="text/csv", user=user, mnNodeId=node)
   doOut <- new("DataObject", id=doOutId, filename=csvfile, format="text/csv", user=user, mnNodeId=node)
-  dp <- addData(dp, md1)
-  dp <- addData(dp, doIn)
-  dp <- addData(dp, doOut)
+  dp <- addMember(dp, md1)
+  dp <- addMember(dp, doIn)
+  dp <- addMember(dp, doOut)
   
   # Insert metadata document <-> relationships
   dp <- insertRelationship(dp, subjectID=mdId, objectIDs=c(doOutId))
@@ -378,22 +381,19 @@ test_that("Adding provenance relationships to a DataPackage via describeWorkflow
     outIds <- list()
     # Add the program object to the package
     doProg <- new("DataObject", format="application/R", 
-                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
-                  suggestedFilename="logit-regression-example.R")
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"))
     progId <- getIdentifier(doProg)
-    dp <- addData(dp, doProg)
+    dp <- addMember(dp, doProg)
     # Add the input object to the package
     doIn <- new("DataObject", format="text/csv", 
-                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
-                suggestedFilename="binary.csv")
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
     inIds[[length(inIds)+1]] <- getIdentifier(doIn)
-    dp <- addData(dp, doIn)
+    dp <- addMember(dp, doIn)
     # Add the output object to the package
     doOut <- new("DataObject", format="image/png", 
-                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
-                 suggestedFilename="gre-predicted.png")
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
     outIds[[length(outIds)+1]] <- getIdentifier(doOut)
-    dp <- addData(dp, doOut)
+    dp <- addMember(dp, doOut)
     # Add the provenenace relationships for the script execution, using ids for 'sources, program, derivation' arguments
     dp <- describeWorkflow(dp, sources=inIds, program=progId, derivations=outIds)
     # Test if the data frame with retrieved relationships was constructed correctly
@@ -414,19 +414,16 @@ test_that("Adding provenance relationships to a DataPackage via describeWorkflow
     inputs <- list()
     outputs <- list()
     doProg <- new("DataObject", format="application/R", 
-                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
-                  suggestedFilename="logit-regression-example R script")
-    dp <- addData(dp, doProg)
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"))
+    dp <- addMember(dp, doProg)
     progId <- getIdentifier(doProg)
     doIn <- new("DataObject", format="text/csv", 
-                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
-                suggestedFilename="binary.csv")
-    dp <- addData(dp, doIn)
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
+    dp <- addMember(dp, doIn)
     inputs[[length(inputs)+1]] <- doIn
     doOut <- new("DataObject", format="image/png", 
-                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
-                 suggestedFilename="gre-predicted.png")
-    dp <- addData(dp, doOut)
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
+    dp <- addMember(dp, doOut)
     outputs[[length(outputs)+1]] <- doOut
     dp <- describeWorkflow(dp, sources=inputs, program=doProg, derivations=outputs)
     relations <- getRelationships(dp, quiet=quietOn)
@@ -447,14 +444,12 @@ test_that("Adding provenance relationships to a DataPackage via describeWorkflow
     inputs <- list()
     outputs <- list()
     doIn <- new("DataObject", format="text/csv", 
-                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
-                suggestedFilename="binary.csv")
-    dp <- addData(dp, doIn)
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
+    dp <- addMember(dp, doIn)
     inputs[[length(inputs)+1]] <- doIn
     doOut <- new("DataObject", format="image/png", 
-                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
-                 suggestedFilename="gre-predicted.png")
-    dp <- addData(dp, doOut)
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
+    dp <- addMember(dp, doOut)
     outputs[[length(outputs)+1]] <- doOut
     dp <- describeWorkflow(dp, sources=inputs, derivations=outputs)
     relations <- getRelationships(dp, quiet=quietOn)
@@ -469,14 +464,12 @@ test_that("Adding provenance relationships to a DataPackage via describeWorkflow
     inputs <- list()
     outputs <- list()
     doProg <- new("DataObject", format="application/R", 
-                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
-                  suggestedFilename="logit-regression-example R script")
-    dp <- addData(dp, doProg)
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"))
+    dp <- addMember(dp, doProg)
     progId <- getIdentifier(doProg)
     doOut <- new("DataObject", format="image/png", 
-                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"),
-                 suggestedFilename="gre-predicted.png")
-    dp <- addData(dp, doOut)
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
+    dp <- addMember(dp, doOut)
     outputs[[length(outputs)+1]] <- doOut
     dp <- describeWorkflow(dp, program=doProg, derivations=outputs)
     relations <- getRelationships(dp, quiet=quietOn)
@@ -492,15 +485,13 @@ test_that("Adding provenance relationships to a DataPackage via describeWorkflow
     dp <- new("DataPackage")
     inputs <- list()
     doProg <- new("DataObject", format="application/R", 
-                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"),
-                  suggestedFilename="logit-regression-example R script")
-    dp <- addData(dp, doProg)
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"))
+    dp <- addMember(dp, doProg)
     progId <- getIdentifier(doProg)
 
     doIn <- new("DataObject", format="text/csv", 
-                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"),
-                suggestedFilename="binary.csv")
-    dp <- addData(dp, doIn)
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
+    dp <- addMember(dp, doIn)
     inputs[[length(inputs)+1]] <- doIn
     dp <- describeWorkflow(dp, sources=inputs, program=doProg)
     relations <- getRelationships(dp, quiet=quietOn)
@@ -521,12 +512,28 @@ test_that("Adding provenance relationships to a DataPackage via describeWorkflow
     err <- try(dp <- describeWorkflow(dp, program=doProg), silent=TRUE)
     expect_match(class(err), "try-error")
     
+    
+    relations <- getRelationships(dp, quiet=quietOn)
+    expect_match(relations[relations$subject == getIdentifier(doIn),'object'], 'Data')
+    execId <- relations[relations$object == datapack:::provONEexecution,'subject']
+    expect_match(relations[relations$predicate == datapack:::provUsed,'object'], getIdentifier(doIn))
+    expect_match(relations[relations$predicate == datapack:::provUsed,'subject'], execId)
+    expect_match(relations[relations$predicate == datapack:::provHadPlan,'object'], progId) 
+    
+    # Test removing a DataObject from the package - make sure that all the package relationships that had
+    # the DataObject as a subject or object have been removed. This includes any relationship, i.e. cito:*
+    # and prov:*.
+    dp <- removeMember(dp, doIn, removeRelationships=TRUE)
+    rels <- relations[relations$predicate == datapack:::provUsed,'object']
+    
+    
     # Test prov:wasDerivedFrom with pids that are not package members
     rm(dp)
     dp <- new("DataPackage")
     # Insert derivation relationships
     source <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1"
     derived <- "https://cn.dataone.org/cn/v1/object/doi:1234/_030MXTI009R00_20030812.45.1"
+    # Keep recordDerivation in unit tests until v 1.3.0, when it may be marked as defunct
     dp <- suppressWarnings(recordDerivation(dp, sourceID=source, derivedIDs=derived))
     relations <- getRelationships(dp, quiet=quietOn)
     
@@ -536,3 +543,196 @@ test_that("Adding provenance relationships to a DataPackage via describeWorkflow
     expect_equal(relations[relations$predicate == datapack:::provWasDerivedFrom, 'subject'], derived)
     expect_equal(relations[relations$predicate == datapack:::provWasDerivedFrom, 'object'], source)
 })
+
+test_that("removeMember works", {
+    library(datapack)
+    #
+    # Now do the same test without the outputs so that 'prov:generqtedBy' are not inserted, but other
+    # relationships are.
+    dp <- new("DataPackage")
+    inputs <- list()
+    doProg <- new("DataObject", format="application/R", 
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"))
+    dp <- addMember(dp, doProg)
+    progId <- getIdentifier(doProg)
+    
+    doIn <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
+    dp <- addMember(dp, doIn)
+    inputs[[length(inputs)+1]] <- doIn
+    dp <- describeWorkflow(dp, sources=inputs, program=doProg)
+    relations <- getRelationships(dp, quiet=quietOn)
+    expect_match(relations[relations$subject == getIdentifier(doIn),'object'], 'Data')
+    execId <- relations[relations$object == datapack:::provONEexecution,'subject']
+    expect_match(relations[relations$predicate == datapack:::provUsed,'object'], getIdentifier(doIn))
+    expect_match(relations[relations$predicate == datapack:::provUsed,'subject'], execId)
+    expect_match(relations[relations$predicate == datapack:::provHadPlan,'object'], progId) 
+    
+    # Test removing a DataObject from the package - make sure that all the package relationships that had
+    # the DataObject as a subject or object have been removed. This includes any relationship, i.e. cito:*
+    # and prov:*.
+    dp <- removeMember(dp, doIn)
+    relations <- getRelationships(dp, quiet=quietOn)
+    rels <- relations[relations$subject == getIdentifier(doIn), ]
+    expect_equal(nrow(rels), 0)
+    rels <- relations[relations$object == getIdentifier(doIn), ]
+    expect_equal(nrow(rels), 0)
+})
+
+test_that("replaceMember works", {
+    library(datapack)
+    #
+    # Now do the same test without the outputs so that 'prov:generqtedBy' are not inserted, but other
+    # relationships are.
+    dp <- new("DataPackage")
+    inputs <- list()
+    doProg <- new("DataObject", format="application/R", 
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"))
+    dp <- addMember(dp, doProg)
+    progId <- getIdentifier(doProg)
+    
+    doIn <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
+    dp <- addMember(dp, doIn)
+    inputs[[length(inputs)+1]] <- doIn
+    dp <- describeWorkflow(dp, sources=inputs, program=doProg)
+    relations <- getRelationships(dp, quiet=quietOn)
+    expect_match(relations[relations$subject == getIdentifier(doIn),'object'], 'Data')
+    execId <- relations[relations$object == datapack:::provONEexecution,'subject']
+    expect_match(relations[relations$predicate == datapack:::provUsed,'object'], getIdentifier(doIn))
+    expect_match(relations[relations$predicate == datapack:::provUsed,'subject'], execId)
+    expect_match(relations[relations$predicate == datapack:::provHadPlan,'object'], progId) 
+    
+    # Test removing a DataObject from the package - make sure that all the package relationships that had
+    # the DataObject as a subject or object have been removed. This includes any relationship, i.e. cito:*
+    # and prov:*.
+    # Test replaceMember by substituting the zipped version of the file. 
+    dp <- replaceMember(dp, doIn, replacement=system.file("./extdata/pkg-example/binary.csv.zip", package="datapack"),
+                        format="application/octet-stream") 
+    formatId <- getValue(dp, name="sysmeta@formatId", identifiers=getIdentifier(doIn))
+    expect_match(formatId[[1]], "application/octet-stream")
+})
+
+
+test_that("updateMetadata works", {
+    library(datapack)
+    library(XML)
+    # Create a DataObject and add it to the DataPackage
+    dp <- new("DataPackage")
+    sampleMeta <- system.file("./extdata/sample-eml.xml", package="datapack")
+    metaObj <- new("DataObject", format="eml://ecoinformatics.org/eml-2.1.1", file=sampleMeta)
+    metaId <- getIdentifier(metaObj)
+    dp <- addMember(dp, metaObj)
+    
+    # In the metadata object, insert the newly assigned data 
+    xp <- sprintf("//dataTable/physical/distribution[../objectName/text()=\"%s\"]/online/url", "sample-data.csv") 
+    newURL <- sprintf("https://cn.dataone.org/cn/v2/resolve/%s", "1234")
+    dp <- updateMetadata(dp, metaObj, xpath=xp, replacement=newURL)
+   
+    # Now retrieve the new value from the metadata using an independent method (not using datapack) and see
+    # if the metadata was actually updated.
+    metadataDoc <- xmlInternalTreeParse(rawToChar(getData(metaObj)))
+    nodeSet = xpathApply(metadataDoc, xp)
+    URL <- xmlValue(nodeSet[[1]])
+    
+    expect_match(newURL, URL) 
+})
+
+test_that("DataPackage accessPolicy methods", {
+    library(datapack)
+    library(digest)
+   
+    dp <- new("DataPackage")
+    data <- charToRaw("1,2,3\n4,5,6\n")
+    obj <- new("DataObject", id="id1", dataobj=data, format="text/csv")
+    dp <- addMember(dp, obj)
+    data2 <- charToRaw("7,8,9\n4,10,11\n")
+    obj2 <- new("DataObject", id="id2", dataobj=data2, format="text/csv")
+    dp <- addMember(dp, obj2)
+    # Add access rule to all package members
+    dp <- addAccessRule(dp, "uid=smith,ou=Account,dc=example,dc=com", "write")
+    dp <- addAccessRule(dp, "uid=smith,ou=Account,dc=example,dc=com", "changePermission")
+    
+    expect_true(hasAccessRule(dp, "uid=smith,ou=Account,dc=example,dc=com", "write"))
+    expect_true(hasAccessRule(dp, "uid=smith,ou=Account,dc=example,dc=com", "changePermission"))
+    expect_false(hasAccessRule(dp, "uid=edwards,ou=Account,dc=labx,dc=com", "write"))
+    
+    # Now take 'changePermission' away for user 'uid=smith...'
+    dp <- removeAccessRule(dp, "uid=smith,ou=Account,dc=example,dc=com", "changePermission")
+    expect_false(hasAccessRule(dp, "uid=smith,ou=Account,dc=example,dc=com", "changePermission"))
+    
+    #' 
+    #' # Alternatively, parameter "y" can be a data.frame containing one or more access rules:
+    #' # Add write, changePermission for uid=jones,...
+    dp <- addAccessRule(dp, "uid=jones,ou=Account,dc=example,dc=com", "write")
+    dp <- addAccessRule(dp, "uid=jones,ou=Account,dc=example,dc=com", "changePermission")
+    expect_true(hasAccessRule(dp, "uid=jones,ou=Account,dc=example,dc=com", "write"))
+    expect_true(hasAccessRule(dp, "uid=jones,ou=Account,dc=example,dc=com", "changePermission"))
+    #' # Now take privs for uid=jones,... away
+    accessRules <- data.frame(subject=c("uid=jones,ou=Account,dc=example,dc=com", 
+                                          "uid=jones,ou=Account,dc=example,dc=com"), 
+                                          permission=c("write", "changePermission"))
+    dp <- removeAccessRule(dp, accessRules)
+    expect_false(hasAccessRule(dp, "uid=jones,ou=Account,dc=example,dc=com", "write"))
+    expect_false(hasAccessRule(dp, "uid=jones,ou=Account,dc=example,dc=com", "changePermission"))
+    
+    # Test that setting public access works
+    expect_false(hasAccessRule(dp, "public", "read"))
+    
+    # Test that custom access rules can be added to sysmeta of a DataObject
+    accessRules <- data.frame(subject=c("uid=sanders,ou=Account,dc=example,dc=com", 
+                                        "uid=wiggens,o=unaffiliated,dc=example,dc=org"), 
+                              permission=c("write", "changePermission"), stringsAsFactors=FALSE)
+    dp <- addAccessRule(dp, accessRules)
+    expect_true(hasAccessRule(dp, "uid=sanders,ou=Account,dc=example,dc=com", "write"))
+    expect_true(hasAccessRule(dp, "uid=wiggens,o=unaffiliated,dc=example,dc=org", "changePermission"))
+    
+    # Test that an access policy can be cleared, i.e. all access rules removed.
+    dp <- clearAccessPolicy(dp)
+    expect_false(hasAccessRule(dp, "uid=sanders,ou=Account,dc=example,dc=com", "write"))
+    expect_false(hasAccessRule(dp, "uid=wiggens,o=unaffiliated,dc=example,dc=org", "changePermission"))
+    
+    # Now add public read access to all members
+    dp <- setPublicAccess(dp)
+    expect_true(hasAccessRule(dp, "public", "read"))
+})
+
+test_that("DataPackage member selection, set, get methods", {
+    library(datapack)
+    library(digest)
+    
+    dp <- new("DataPackage")
+    inputs <- list()
+    outputs <- list()
+    doProg <- new("DataObject", format="application/R", 
+                  filename=system.file("./extdata/pkg-example/logit-regression-example.R", package="datapack"))
+    dp <- addMember(dp, doProg)
+    progId <- getIdentifier(doProg)
+    doIn <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
+    dp <- addMember(dp, doIn)
+    
+    doIn2 <- new("DataObject", format="text/csv", 
+                filename=system.file("./extdata/sample-data.csv", package="datapack"))
+    dp <- addMember(dp, doIn2) 
+    
+    doOut <- new("DataObject", format="image/png", 
+                 filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
+    dp <- addMember(dp, doOut)
+    
+    pid <- selectMember(dp, name="sysmeta@formatId", value="application/R")
+    expect_equal(pid, progId)
+    
+    pids <- selectMember(dp, name="sysmeta@formatId", value="text/csv")
+    expect_true(getIdentifier(doIn) %in% pids)
+    expect_true(getIdentifier(doIn2) %in% pids)
+    expect_equal(length(pids), 2)
+    
+    dp <- setValue(dp, name="sysmeta@rightsHolder", value="orcid.org/0000-0002-2192-403X", identifiers=getIdentifiers(dp))
+    userIds <- selectMember(dp, name="sysmeta@rightsHolder", value="orcid.org/0000-0002-2192-403X")
+    expect_equal(length(userIds), 4)
+    
+    vals <- getValue(dp, name="sysmeta@rightsHolder")
+    expect_true(all(vals == "orcid.org/0000-0002-2192-403X"))
+})
+

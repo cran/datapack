@@ -4,14 +4,14 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<meta name="date" content="2017-04-07" />
+<meta name="date" content="2017-08-02" />
 
 <title>datapack R package overview</title>
 
@@ -68,13 +68,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 <h1 class="title toc-ignore">datapack R package overview</h1>
-<h4 class="date"><em>2017-04-07</em></h4>
+<h4 class="date"><em>2017-08-02</em></h4>
 
 
 
 <div id="overview" class="section level2">
 <h2>Overview</h2>
-<p>The <em>datapack</em> R package provides an abstraction for collating multile data objects of different types and metadata describing those objects into a bundle that can be transported and loaded using a single composite file. It is primarily meant as a container to bundle together files for transport to or from data repositories that support the <a href="https://releases.dataone.org/online/api-documentation-v2.0.1/design/DataPackage.html">DataONE Data Package model</a>, including the member repositories in the <a href="https://dataone.org">DataONE Federation</a>.</p>
+<p>The <em>datapack</em> R package provides an abstraction for collating multile data objects of different types and metadata describing those objects into a bundle that can be transported and loaded using a single composite file. It is primarily meant as a container to bundle together files for transport to or from DataONE data repositories.</p>
 <p>The methods in this package provide a convenient way to load data from common repositories such as DataONE into the R environment, and to document, serialize, and save data from R to data repositories.</p>
 </div>
 <div id="create-a-single-object" class="section level2">
@@ -104,7 +104,7 @@ myObj &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st"
 <p>If the data were another format than CSV, such as PNG, JPEG, or NetCDF, the corresponding R packages could be used to handle the object.</p>
 <p>Each DataObject has an identifier which can be used to refer to that object, and is meant to be globally unique so that it can be used in data repositories such as those from the DataONE federation. To retrieve the identifier associated with a DataObject:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">getIdentifier</span>(myObj)</code></pre></div>
-<pre><code>## [1] &quot;urn:uuid:62b900fc-49df-4983-8afb-cb7187ce54f5&quot;</code></pre>
+<pre><code>## [1] &quot;urn:uuid:a494d57c-1f80-4982-8322-eceb6d26fc1b&quot;</code></pre>
 <p>In this case, the identifier was created in the UUID format, but other identifiers such as DOIs (Digital Object Identifers) can also be used. Each object also is associated with a specific format. To retrieve the format type:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">getFormatId</span>(myObj)</code></pre></div>
 <pre><code>## [1] &quot;text/csv&quot;</code></pre>
@@ -112,7 +112,7 @@ myObj &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st"
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(myObj@sysmeta)</code></pre></div>
 <pre><code>## Formal class 'SystemMetadata' [package &quot;datapack&quot;] with 24 slots
 ##   ..@ serialVersion          : num 1
-##   ..@ identifier             : chr &quot;urn:uuid:62b900fc-49df-4983-8afb-cb7187ce54f5&quot;
+##   ..@ identifier             : chr &quot;urn:uuid:a494d57c-1f80-4982-8322-eceb6d26fc1b&quot;
 ##   ..@ formatId               : chr &quot;text/csv&quot;
 ##   ..@ size                   : num 7718
 ##   ..@ checksum               : chr &quot;aa767c3d9fe95ea1670cf3df82922872550f3a81&quot;
@@ -130,7 +130,7 @@ myObj &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st"
 ##   ..@ obsoletedBy            : chr NA
 ##   ..@ archived               : logi FALSE
 ##   ..@ dateUploaded           : chr NA
-##   ..@ dateSysMetadataModified: chr &quot;2017-04-07T21:23:02Z&quot;
+##   ..@ dateSysMetadataModified: chr &quot;2017-08-03T04:03:00Z&quot;
 ##   ..@ originMemberNode       : chr NA
 ##   ..@ authoritativeMemberNode: chr NA
 ##   ..@ seriesId               : chr NA
@@ -166,7 +166,7 @@ myObj@sysmeta@accessPolicy</code></pre></div>
 ## 2   http://orcid.org/0000-0003-0077-4738            write
 ## 3 uid=jsmith,o=Account,dc=example,dc=com            write
 ## 4 uid=jadams,o=Account,dc=example,dc=org changePermission</code></pre>
-<p>The <em>dataone</em> R package can be used to upload or download DataObjecs to a DataONE Member Node. Please see the web page for the <a href="http://github.com/DataONEorg/rdataone"><em>dataone</em></a> R package and the vignettes for more information:</p>
+<p>The <em>dataone</em> R package can be used to upload or download DataObjects to a DataONE Member Node. Please see the web page for the <a href="http://github.com/DataONEorg/rdataone"><em>dataone</em></a> R package and the vignettes for more information:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dataone)
 <span class="kw">vignette</span>(<span class="st">&quot;download-data&quot;</span>, <span class="dt">package=</span><span class="st">&quot;dataone&quot;</span>)
 <span class="kw">vignette</span>(<span class="st">&quot;upload-data&quot;</span>, <span class="dt">package=</span><span class="st">&quot;dataone&quot;</span>)</code></pre></div>
@@ -189,12 +189,18 @@ sciObj2 &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="s
 <p>The identifier values used in this example are simple and easily recognizable for demonstration purposes. A more standard unique identifier can be created with the <code>uuid::UUIDgenerate()</code> function:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">myid &lt;-<span class="st"> </span><span class="kw">paste</span>(<span class="st">&quot;urn:uuid:&quot;</span>, <span class="kw">UUIDgenerate</span>(), <span class="dt">sep=</span><span class="st">&quot;&quot;</span>)
 myid</code></pre></div>
-<pre><code>## [1] &quot;urn:uuid:13d73f45-2953-4a00-b8e1-5d54d58510a0&quot;</code></pre>
+<pre><code>## [1] &quot;urn:uuid:cc2f78f3-d420-47c5-9e70-83d4f84f7163&quot;</code></pre>
 <p>Next a DataPackage is created and the DataObjects are added to it:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dp &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st">&quot;DataPackage&quot;</span>)
-dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class="dt">do =</span> metadataObj)
-dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class="dt">do =</span> sciObj)
-<span class="co"># The second object will be added in the next section </span></code></pre></div>
+dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class="dt">do =</span> metadataObj)</code></pre></div>
+<pre><code>## Warning: 'addData' is deprecated.
+## Use 'addMember' instead.
+## See help(&quot;Deprecated&quot;) and help(&quot;datapack-deprecated&quot;).</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class="dt">do =</span> sciObj)</code></pre></div>
+<pre><code>## Warning: 'addData' is deprecated.
+## Use 'addMember' instead.
+## See help(&quot;Deprecated&quot;) and help(&quot;datapack-deprecated&quot;).</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># The second object will be added in the next section </span></code></pre></div>
 <p>Information can also be extracted from the DataPackage. To show the identifiers of the DataObjects that are in the package:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">getIdentifiers</span>(dp)</code></pre></div>
 <pre><code>## [1] &quot;metadataId&quot; &quot;sciId1&quot;</code></pre>
@@ -219,11 +225,14 @@ dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class
 <div id="linking-a-metadata-file-with-one-or-more-data-files-using-citodocuments" class="section level3">
 <h3>Linking a metadata file with one or more data files using cito:documents</h3>
 <p>The fastest way to add the <code>cito:documents</code> relationship is to include the metadata object when a science data object is added to the package:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class="dt">do =</span> sciObj2, <span class="dt">mo =</span> metadataObj)
-<span class="kw">getRelationships</span>(dp, <span class="dt">condense=</span><span class="ot">TRUE</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class="dt">do =</span> sciObj2, <span class="dt">mo =</span> metadataObj)</code></pre></div>
+<pre><code>## Warning: 'addData' is deprecated.
+## Use 'addMember' instead.
+## See help(&quot;Deprecated&quot;) and help(&quot;datapack-deprecated&quot;).</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">getRelationships</span>(dp, <span class="dt">condense=</span><span class="ot">TRUE</span>)</code></pre></div>
 <pre><code>##                 subject           predicate                object
-## 1        sample-eml.xml      cito:documents sample-da...tered.csv
-## 2 sample-da...tered.csv cito:isDocumentedBy        sample-eml.xml</code></pre>
+## 2 sample-da...tered.csv cito:isDocumentedBy        sample-eml.xml
+## 1        sample-eml.xml      cito:documents sample-da...tered.csv</code></pre>
 <p>In that example, the <code>sciObj2</code> DataObject is added to the package using the <code>addData</code> call, and the metadata object <code>metadataObj</code> is passed in to the function as well. This tells the DataPackage that <code>metadataId cito:documents sciId2</code>. The <code>cito:documents</code> relationship is defined by the <a href="http://vocab.ox.ac.uk/index">Citation Typing Ontology</a> (CITO)).</p>
 </div>
 </div>
@@ -236,30 +245,33 @@ dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, <span class
 
 <span class="co"># This DataObject contains the program script that was executed</span>
 progObj &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st">&quot;DataObject&quot;</span>, <span class="dt">format=</span><span class="st">&quot;application/R&quot;</span>, 
-           <span class="dt">filename=</span><span class="kw">system.file</span>(<span class="st">&quot;extdata/pkg-example/logit-regression-example.R&quot;</span>, <span class="dt">package=</span><span class="st">&quot;datapack&quot;</span>),
-           <span class="dt">suggestedFilename=</span><span class="st">&quot;logit-regression-example.R&quot;</span>)
-dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, progObj)
-
-doIn &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st">&quot;DataObject&quot;</span>, <span class="dt">format=</span><span class="st">&quot;text/csv&quot;</span>, 
-             <span class="dt">filename=</span><span class="kw">system.file</span>(<span class="st">&quot;./extdata/pkg-example/binary.csv&quot;</span>, <span class="dt">package=</span><span class="st">&quot;datapack&quot;</span>),
-             <span class="dt">suggestedFilename=</span><span class="st">&quot;binary.csv&quot;</span>)
-dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, doIn)
-
-doOut &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st">&quot;DataObject&quot;</span>, <span class="dt">format=</span><span class="st">&quot;image/png&quot;</span>, 
-             <span class="dt">filename=</span><span class="kw">system.file</span>(<span class="st">&quot;./extdata/pkg-example/gre-predicted.png&quot;</span>, <span class="dt">package=</span><span class="st">&quot;datapack&quot;</span>),
-             <span class="dt">suggestedFilename=</span><span class="st">&quot;gre-predicted.png&quot;</span>)
-dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, doOut)
-
-<span class="co"># The arguments &quot;sources&quot; and &quot;derivations&quot; can also contain lists of &quot;DataObjects&quot;</span>
+           <span class="dt">filename=</span><span class="kw">system.file</span>(<span class="st">&quot;extdata/pkg-example/logit-regression-example.R&quot;</span>, <span class="dt">package=</span><span class="st">&quot;datapack&quot;</span>))
+dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, progObj)</code></pre></div>
+<pre><code>## Warning: 'addData' is deprecated.
+## Use 'addMember' instead.
+## See help(&quot;Deprecated&quot;) and help(&quot;datapack-deprecated&quot;).</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">doIn &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st">&quot;DataObject&quot;</span>, <span class="dt">format=</span><span class="st">&quot;text/csv&quot;</span>, 
+             <span class="dt">filename=</span><span class="kw">system.file</span>(<span class="st">&quot;./extdata/pkg-example/binary.csv&quot;</span>, <span class="dt">package=</span><span class="st">&quot;datapack&quot;</span>))
+dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, doIn)</code></pre></div>
+<pre><code>## Warning: 'addData' is deprecated.
+## Use 'addMember' instead.
+## See help(&quot;Deprecated&quot;) and help(&quot;datapack-deprecated&quot;).</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">doOut &lt;-<span class="st"> </span><span class="kw">new</span>(<span class="st">&quot;DataObject&quot;</span>, <span class="dt">format=</span><span class="st">&quot;image/png&quot;</span>, 
+             <span class="dt">filename=</span><span class="kw">system.file</span>(<span class="st">&quot;./extdata/pkg-example/gre-predicted.png&quot;</span>, <span class="dt">package=</span><span class="st">&quot;datapack&quot;</span>))
+dp &lt;-<span class="st"> </span><span class="kw">addData</span>(dp, doOut)</code></pre></div>
+<pre><code>## Warning: 'addData' is deprecated.
+## Use 'addMember' instead.
+## See help(&quot;Deprecated&quot;) and help(&quot;datapack-deprecated&quot;).</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># The arguments &quot;sources&quot; and &quot;derivations&quot; can also contain lists of &quot;DataObjects&quot;</span>
 dp &lt;-<span class="st"> </span><span class="kw">describeWorkflow</span>(dp, <span class="dt">sources=</span>doIn, <span class="dt">program=</span>progObj, <span class="dt">derivations=</span>doOut)
 rels &lt;-<span class="st"> </span><span class="kw">getRelationships</span>(dp, <span class="dt">condense=</span><span class="ot">TRUE</span>)
 rels[<span class="kw">grepl</span>(<span class="st">&quot;prov:&quot;</span>, rels$predicate),]</code></pre></div>
 <pre><code>##                  subject             predicate                object
-## 5  _:55e04f4...5397c71d0          prov:hadPlan logit-reg...example.R
+## 5  _01723eff...cf10d7a86          prov:hadPlan logit-reg...example.R
 ## 11     gre-predicted.png   prov:wasDerivedFrom            binary.csv
-## 10     gre-predicted.png   prov:wasGeneratedBy urn:uuid:...2e16cbcb1
-## 3  urn:uuid:...2e16cbcb1 prov:qual...sociation _:55e04f4...5397c71d0
-## 9  urn:uuid:...2e16cbcb1             prov:used            binary.csv</code></pre>
+## 10     gre-predicted.png   prov:wasGeneratedBy urn:uuid:...0844d89ac
+## 3  urn:uuid:...0844d89ac prov:qual...sociation _01723eff...cf10d7a86
+## 9  urn:uuid:...0844d89ac             prov:used            binary.csv</code></pre>
 <p>Note that in this example, the R script had previously been run and generated the image file before <code>describeWorkflow()</code> was called. The <code>sources</code> and <code>derivations</code> arguments for <code>describeWorkflow()</code> can be lists of either DataObjects or the identifiers of DataObjects.</p>
 <div id="inserting-other-arbitrary-relationships" class="section level3">
 <h3>Inserting other (arbitrary) relationships</h3>
@@ -314,7 +326,7 @@ packageId &lt;-<span class="st"> </span><span class="kw">paste</span>(<span clas
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>
