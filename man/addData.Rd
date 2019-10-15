@@ -8,7 +8,7 @@
 \usage{
 addData(x, do, ...)
 
-\S4method{addData}{DataPackage,DataObject}(x, do, mo = as.character(NA))
+\S4method{addData}{DataPackage,DataObject}(x, do, mo = NA_character_)
 }
 \arguments{
 \item{x}{A DataPackage instance}

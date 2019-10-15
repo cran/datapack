@@ -1,7 +1,7 @@
 context("DataPackage")
 
 test_that("datapack library loads", {
-    library(datapack)
+    expect_true(library(datapack, logical.return = TRUE))
 })
 
 test_that("datapack initialization works", {
@@ -215,6 +215,41 @@ test_that("InsertRelationship methods work", {
   expect_equal(relations[relations$predicate == datapack:::provWasDerivedFrom, 'object'], source)
 })
 
+test_that("removeRelationships method works", {
+    
+    dp <- new("DataPackage")
+    # Create a relationship
+    dp <- insertRelationship(dp, "/Users/smith/scripts/genFields.R",
+                             "https://knb.org/data_20030812.40.1",
+                             "http://www.w3.org/ns/prov#used")
+    # Create a relationshp with the subject as a blank node with an automatically assigned blank 
+    # node id
+    dp <- insertRelationship(dp, subjectID=NA_character_, objectIDs="thing6", 
+                             predicate="http://myns.org/wasThing")
+    # Create a relationshp with the subject as a blank node with a user assigned blank node id
+    dp <- insertRelationship(dp, subjectID="urn:uuid:bc9e160e-ca21-47d5-871b-4a4820fe4451", 
+                             objectIDs="thing7", predicate="http://myns.org/hadThing")
+    # Create multiple relationships with the same subject, predicate, but different objects
+    dp <- insertRelationship(dp, subjectID="https://myns.org/subject1", 
+                             objectIDs=c("thing4", "thing5"), predicate="http://myns.org/hadThing")
+    # Create multiple relationships with subject and object types specified
+    dp <- insertRelationship(dp, subjectID="orcid.org/0000-0002-2192-403X", 
+                             objectIDs="http://www.example.com/home", predicate="http://myns.org/hadHome",
+                             subjectType="uri", objectType="literal")
+    
+    # Now check if deleting various relationships results in the right number of rows
+    expect_that(nrow(getRelationships(dp)), equals(6))
+    dp <- removeRelationships(dp, predicate='http://myns.org/wasThing')
+    expect_that(nrow(getRelationships(dp)), equals(5))
+    dp <- removeRelationships(dp, subjectID='orcid.org/0000-0002-2192-403X')
+    expect_that(nrow(getRelationships(dp)), equals(4))
+    dp <- removeRelationships(dp, subjectID='https://myns.org/subject1', predicate='http://myns.org/hadThing')
+    expect_that(nrow(getRelationships(dp)), equals(2))
+    dp <- removeRelationships(dp)
+    expect_that(nrow(getRelationships(dp)), equals(0))
+    
+})
+
 test_that("Package serialization works", {
   
   library(uuid)
@@ -253,7 +288,7 @@ test_that("Package serialization works", {
   serializationId <- sprintf("%s%s", "resourceMap1", UUIDgenerate())
   filePath <- file.path(sprintf("%s/%s.rdf", tempdir(), serializationId))
   status <- serializePackage(dp, filePath, id=serializationId)
-  expect_that(file.exists(filePath), is_true())
+  expect_true(file.exists(filePath))
   found <- grep("wasDerivedFrom", readLines(filePath))
   expect_that(found, is_more_than(0))
   unlink(filePath)
@@ -268,14 +303,14 @@ test_that("Package serialization works", {
   # First compare ids
   dpIds <- getIdentifiers(dp)
   dpNewIds <- getIdentifiers(dpNew)
-  expect_that(identical(dpIds, dpNewIds, ignore.environment = TRUE), is_true())
+  expect_true(identical(dpIds, dpNewIds, ignore.environment = TRUE))
   # Compare relationships
   dpRelations <- getRelationships(dp)
   dpNewRelations <-getRelationships(dpNew)
-  expect_that(identical(dpRelations, dpNewRelations, ignore.environment = TRUE), is_true())
+  expect_true(identical(dpRelations, dpNewRelations, ignore.environment = TRUE))
   # Compare each data object
   for (id in getIdentifiers(dp)) {
-    expect_that(identical(getData(dp, id), getData(dpNew, id)), is_true())
+    expect_true(identical(getData(dp, id), getData(dpNew, id)))
   }
   unlink(dpFile)
   
@@ -297,7 +332,7 @@ test_that("Package serialization works with minimal DataPackage", {
     serializationId <- sprintf("%s%s", "resourceMap1", UUIDgenerate())
     filePath <- file.path(sprintf("%s/%s.rdf", tempdir(), serializationId))
     status <- serializePackage(dp, filePath, id=serializationId)
-    expect_that(file.exists(filePath), is_true())
+    expect_true(file.exists(filePath))
     found <- grep(mdId, readLines(filePath))
     expect_that(found, is_more_than(0))
     unlink(filePath)
@@ -366,8 +401,8 @@ test_that("BagIt serialization works", {
                      dataTypeURIs="http://www.w3.org/2001/XMLSchema#string")
   
  bagitFile <- serializeToBagIt(dp) 
- expect_that(file.exists(bagitFile), is_true())
- expect_that(file.info(bagitFile)[['size']] > 0, is_true())
+ expect_true(file.exists(bagitFile))
+ expect_true(file.info(bagitFile)[['size']] > 0)
 
 }) 
 

@@ -11,7 +11,7 @@ vignette: >
 
 ## Overview
 
-The *datapack* R package provides an abstraction for collating multile data 
+The *datapack* R package provides an abstraction for collating multiple data 
 objects of different types and metadata describing those objects into a bundle that can be transported and loaded using a single composite file.  It is primarily meant as
 a container to bundle together files for transport to or from DataONE data repositories.
 
@@ -164,8 +164,8 @@ myid
 Next a DataPackage is created and the DataObjects are added to it:
 ```{r}
 dp <- new("DataPackage")
-dp <- addData(dp, do = metadataObj)
-dp <- addData(dp, do = sciObj)
+dp <- addMember(dp, do = metadataObj)
+dp <- addMember(dp, do = sciObj)
 # The second object will be added in the next section 
 ```
 
@@ -187,7 +187,7 @@ sciObjRaw <- getData(dp, sciId)
 
 To get access to the full instance of the DataObject class representing a data object, 
 use the `datapack::getMember` function and pass in the identifier of the desired object, 
-which will return an instance of hte DataObject class:
+which will return an instance of the DataObject class:
 ```{r}
 mySciObj <- getMember(dp, sciId)
 ```
@@ -216,7 +216,7 @@ the following typical provenance properties:
 - `prov:wasGeneratedBy`: for asserting that when a program (such as an R script) was executed
   that it generated one or more derived data objects as outputs
   
-Figure 2. A DataPackge with provenance relationships.
+Figure 2. A DataPackage with provenance relationships.
 
 ![](package-diagram-with-prov.png)
 
@@ -225,13 +225,13 @@ Figure 2. A DataPackge with provenance relationships.
 The fastest way to add the `cito:documents` relationship is to include the metadata object when a science data object is added to the package:
 
 ```{r}
-dp <- addData(dp, do = sciObj2, mo = metadataObj)
+dp <- addMember(dp, do = sciObj2, mo = metadataObj)
 getRelationships(dp, condense=TRUE)
 ```
 
-In that example, the `sciObj2` DataObject is added to the package using the `addData` call, 
+In that example, the `sciObj2` DataObject is added to the package using the `addMember` call, 
 and the metadata object `metadataObj` is passed in to the function as well.  This
-tells the DataPackage that `metadataId cito:documents sciId2`. The `cito:documents` relationship is defined by the [Citation Typing Ontology](http://vocab.ox.ac.uk/index) (CITO)).
+tells the DataPackage that `metadataId cito:documents sciId2`. The `cito:documents` relationship is defined by the [Citation Typing Ontology](http://purl.org/spar/cito) (CITO)).
 
 ## Asserting data provenance relationships between objects
 
@@ -255,25 +255,36 @@ dp <- new("DataPackage")
 # This DataObject contains the program script that was executed
 progObj <- new("DataObject", format="application/R", 
            filename=system.file("extdata/pkg-example/logit-regression-example.R", package="datapack"))
-dp <- addData(dp, progObj)
+dp <- addMember(dp, progObj)
 
 doIn <- new("DataObject", format="text/csv", 
              filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
-dp <- addData(dp, doIn)
+dp <- addMember(dp, doIn)
 
 doOut <- new("DataObject", format="image/png", 
              filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
-dp <- addData(dp, doOut)
+dp <- addMember(dp, doOut)
 
 # The arguments "sources" and "derivations" can also contain lists of "DataObjects"
 dp <- describeWorkflow(dp, sources=doIn, program=progObj, derivations=doOut)
+
+
 rels <- getRelationships(dp, condense=TRUE)
 rels[grepl("prov:", rels$predicate),]
 ```
 
+
+
+```{r}
+library(igraph)
+plotRelationships(dp)
+```
+
+
 Note that in this example, the R script had previously been run and generated the image
 file before `describeWorkflow()` was called.  The `sources` and `derivations` arguments 
 for `describeWorkflow()` can be lists of either DataObjects or the identifiers of DataObjects.
+
 
 
 ### Inserting other (arbitrary) relationships
@@ -287,7 +298,7 @@ relations <- getRelationships(dp, condense=TRUE)
 relations[grepl("cito:documents", relations$predicate),]
 ```
 
-Relationships can be fully specified using the URI of the concept, as shown in the following statement that adds a provenence relationship between two objects in the example package:
+Relationships can be fully specified using the URI of the concept, as shown in the following statement that adds a provenance relationship between two objects in the example package:
 
 ```{r, eval=F}
 dp <- insertRelationship(dp, subjectID=sciId2, objectIDs=sciId,
@@ -359,7 +370,7 @@ bagitFilename <- serializeToBagIt(dp)
 ```
 
 The variable `bagitFilename` contains the file path to the temporary BagIt file.
-This file should be copied to another location before quiting or restarting R:
+This file should be copied to another location before quitting or restarting R:
 
 ```{r, eval=F}
 file.copy(bagitFilename, "~/myPackageFile.zip")

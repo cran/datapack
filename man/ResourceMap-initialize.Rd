@@ -6,7 +6,7 @@
 \alias{ResourceMap-initialize}
 \title{Initialize a ResourceMap object.}
 \usage{
-\S4method{initialize}{ResourceMap}(.Object, id = as.character(NA))
+\S4method{initialize}{ResourceMap}(.Object, id = NA_character_)
 }
 \arguments{
 \item{.Object}{a ResourceMap object}

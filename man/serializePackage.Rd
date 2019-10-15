@@ -8,11 +8,11 @@
 \usage{
 serializePackage(x, ...)
 
-\S4method{serializePackage}{DataPackage}(x, file, id = as.character(NA),
+\S4method{serializePackage}{DataPackage}(x, file, id = NA_character_,
   syntaxName = "rdfxml", mimeType = "application/rdf+xml",
   namespaces = data.frame(namespace = character(), prefix = character(),
-  stringsAsFactors = FALSE), syntaxURI = as.character(NA),
-  resolveURI = as.character(NA), creator = as.character(NA))
+  stringsAsFactors = FALSE), syntaxURI = NA_character_,
+  resolveURI = NA_character_, creator = NA_character_)
 }
 \arguments{
 \item{x}{A DataPackage object}
@@ -21,7 +21,7 @@ serializePackage(x, ...)
 
 \item{file}{The file to which the ResourceMap will be serialized}
 
-\item{id}{A unique identifier for the serialization. The default value is the id assinged 
+\item{id}{A unique identifier for the serialization. The default value is the id assigned
 to the DataPackage when it was created.}
 
 \item{syntaxName}{The name of the syntax to use for serialization - default is "rdfxml"}

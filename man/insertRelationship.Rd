@@ -9,8 +9,8 @@
 insertRelationship(x, ...)
 
 \S4method{insertRelationship}{DataPackage}(x, subjectID, objectIDs,
-  predicate = as.character(NA), subjectType = as.character(NA),
-  objectTypes = as.character(NA), dataTypeURIs = as.character(NA))
+  predicate = NA_character_, subjectType = NA_character_,
+  objectTypes = NA_character_, dataTypeURIs = NA_character_)
 }
 \arguments{
 \item{x}{A DataPackage object}
@@ -51,11 +51,11 @@ Note: This method updates the passed-in DataPackage object.
 dp <- new("DataPackage")
 # Create a relationship
 dp <- insertRelationship(dp, "/Users/smith/scripts/genFields.R",
-    "http://www.w3.org/ns/prov#used",
-    "https://knb.ecoinformatics.org/knb/d1/mn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1")
+    "https://knb.ecoinformatics.org/knb/d1/mn/v1/object/doi:1234/_030MXTI009R00_20030812.40.1",
+    "http://www.w3.org/ns/prov#used")
 # Create a relationshp with the subject as a blank node with an automatically assigned blank 
 # node id
-dp <- insertRelationship(dp, subjectID=as.character(NA), objectIDs="thing6", 
+dp <- insertRelationship(dp, subjectID=NA_character_, objectIDs="thing6", 
     predicate="http://www.myns.org/wasThing")
 # Create a relationshp with the subject as a blank node with a user assigned blank node id
 dp <- insertRelationship(dp, subjectID="urn:uuid:bc9e160e-ca21-47d5-871b-4a4820fe4451", 

@@ -1,5 +1,6 @@
 ## datapack: A Flexible Container to Transport and Manipulate Data and Associated Resources
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/datapack)](https://cran.r-project.org/package=datapack)
+[![Build Status](https://travis-ci.org/ropensci/datapack.svg?branch=master)](https://travis-ci.org/ropensci/datapack)
 <!-- [![CRAN_Download_Badge](http://cranlogs.r-pkg.org/badges/datapack)](https://cran.rstudio.com/web/packages/datapack/index.html) -->
 
 - **Author**: Matthew B. Jones and Peter Slaughter ([NCEAS](http://www.nceas.ucsb.edu))
@@ -37,7 +38,7 @@ Note: if you wish to build the required *redland* package from source before ins
 
 ## Installing on Ubuntu
 
-For ubuntu, install the required Redland C libraries by entering the following commands 
+For Ubuntu, install the required Redland C libraries by entering the following commands 
 in a terminal window:
 
 ```

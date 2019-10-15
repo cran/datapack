@@ -9,7 +9,7 @@
 describeWorkflow(x, ...)
 
 \S4method{describeWorkflow}{DataPackage}(x, sources = list(),
-  program = as.character(NA), derivations = list(),
+  program = NA_character_, derivations = list(),
   insertDerivations = TRUE, ...)
 }
 \arguments{

@@ -61,13 +61,14 @@ This is assigned after a package is uploaded or downloaded from a repository.}
  \item{\code{\link{insertRelationship}}}{: Insert relationships between objects in a DataPackage.}
  \item{\code{\link{removeAccessRule}}}{: Remove an access rule from DataObject in a DataPackage.}
  \item{\code{\link{removeMember}}}{: Remove the specified DataObject from a DataPackage.}
+ \item{\code{\link{removeRelationships}}}{: Remove relationships of objects in a DataPackage.}
  \item{\code{\link{replaceMember}}}{: Replace the raw data or file associated with a DataObject.}
  \item{\code{\link{selectMember}}}{: Select package members based on slot values.}
  \item{\code{\link{serializePackage}}}{: Create an OAI-ORE resource map from the DataPackage.}
  \item{\code{\link{serializeToBagIt}}}{: Serialize A DataPackage into a BagIt Archive File.}
  \item{\code{\link{setPublicAccess}}}{: Set the access policy to readable by anyone for DataObject in a DataPackage.}
  \item{\code{\link{setValue}}}{: Set values for selected DataPackage members}
- \item{\code{\link{show}}}{: Print DataPackage information in a formated view.}
+ \item{\code{\link{show}}}{: Print DataPackage information in a formatted view.}
  \item{\code{\link{updateMetadata}}}{: Update selected elements of the XML content of a DataObject in a DataPackage}
  \item{\code{\link{updateRelationships}}}{: Update package relationships by replacing an old identifier with a new one.}
 }

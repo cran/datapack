@@ -8,7 +8,7 @@
 \usage{
 getValue(x, ...)
 
-\S4method{getValue}{DataPackage}(x, name, identifiers = as.character(NA))
+\S4method{getValue}{DataPackage}(x, name, identifiers = NA_character_)
 }
 \arguments{
 \item{x}{A DataPackage instance}

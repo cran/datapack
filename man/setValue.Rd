@@ -9,7 +9,7 @@
 setValue(x, ...)
 
 \S4method{setValue}{DataPackage}(x, name, value,
-  identifiers = as.character(NA))
+  identifiers = NA_character_, ...)
 }
 \arguments{
 \item{x}{A DataPackage instance}

@@ -8,7 +8,7 @@
 \usage{
 addMember(x, ...)
 
-\S4method{addMember}{DataPackage}(x, do, mo = as.character(NA))
+\S4method{addMember}{DataPackage}(x, do, mo = NA_character_)
 }
 \arguments{
 \item{x}{A DataPackage instance}

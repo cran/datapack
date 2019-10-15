@@ -15,8 +15,8 @@ removeAccessRule(x, ...)
 
 \S4method{removeAccessRule}{DataObject}(x, y, ...)
 
-\S4method{removeAccessRule}{DataPackage}(x, y, permission = as.character(NA),
-  identifiers = list(), ...)
+\S4method{removeAccessRule}{DataPackage}(x, y,
+  permission = NA_character_, identifiers = list(), ...)
 }
 \arguments{
 \item{x}{The object instance to which to remove the rule}
@@ -28,10 +28,10 @@ removeAccessRule(x, ...)
 
 \item{y}{The subject of the rule to be removed, or a data.frame containing access rules.}
 
-\item{permission}{THe permission to remove, if parameter \code{x} is a character string containing a \code{subject}.}
+\item{permission}{The permission to remove, if parameter \code{x} is a character string containing a \code{subject}.}
 
 \item{identifiers}{A list of \code{character} values containing package member identifiers that the access rule will be 
-appliced to (default is all package members).}
+applied to (default is all package members).}
 }
 \value{
 The SystemMetadata object with the updated access policy.

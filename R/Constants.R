@@ -11,15 +11,16 @@ xsdString                <- sprintf("%s%s", xsd_NS, "string")
 xsdDateTime              <- sprintf("%s%s", xsd_NS, "dateTime")
 dc_NS                    <- "http://purl.org/dc/elements/1.1/"
 dcterms_NS               <- "http://purl.org/dc/terms/"
-DCidentifier             <- sprintf("%s%s", dcterms_NS, "identifier")
-DCagent                  <- sprintf("%s%s", dcterms_NS, "Agent")
-DCcreator                <- sprintf("%s%s", dc_NS, "creator")
-DCmodified               <- sprintf("%s%s", dcterms_NS, "modified")
+DCTERMSidentifier        <- sprintf("%s%s", dcterms_NS, "identifier")
+DCTERMSagent             <- sprintf("%s%s", dcterms_NS, "Agent")
+DCTERMScreator           <- sprintf("%s%s", dcterms_NS, "creator")
+DCTERMSmodified          <- sprintf("%s%s", dcterms_NS, "modified")
 DCtitle                  <- sprintf("%s%s", dc_NS, "title")
 RDF_NS                   <- "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 FOAF_NS                  <- "http://xmlns.com/foaf/0.1/"
 foafName                 <- sprintf("%s%s", FOAF_NS, "name")
 RDFtype                  <- sprintf("%s%s", RDF_NS, "type")
+otherCreator             <- sprintf("%s%s", dc_NS, "creator")
 # This is kept for backward compatibility
 rdfType <- RDFtype
 provNS                   <- "http://www.w3.org/ns/prov#"
@@ -42,20 +43,34 @@ cito_NS                  <- "http://purl.org/spar/cito/"
 citoDocuments            <-  sprintf("%s%s", cito_NS, "documents")
 citoIsDocumentedBy       <-  sprintf("%s%s", cito_NS, "isDocumentedBy")
 
-knownNamespaces <- data.frame(namespace=character(), prefix=character(), stringsAsFactors=FALSE)
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace=RDF_NS, prefix="rdf", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://www.w3.org/2001/XMLSchema#", prefix="xsd", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://www.w3.org/2000/01/rdf-schema#", prefix="rdfs", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace=provNS, prefix="prov", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace=provONE_NS, prefix="provone", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://purl.org/dc/elements/1.1/", prefix="dc", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://purl.org/dc/terms/", prefix="dcterms", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://xmlns.com/foaf/0.1/", prefix="foaf", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://www.openarchives.org/ore/terms/", prefix="ore", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://purl.org/spar/cito/", prefix="cito", row.names = NULL, stringsAsFactors = FALSE))
-knownNamespaces <- rbind(knownNamespaces, data.frame(namespace="http://www.w3.org/ns/prov#", prefix="prov", row.names = NULL, stringsAsFactors = FALSE))
+namespace_vector <- c(RDF_NS,
+                      "http://www.w3.org/2001/XMLSchema#",
+                      "http://www.w3.org/2000/01/rdf-schema#",
+                      provNS,
+                      provONE_NS,
+                      "http://purl.org/dc/elements/1.1/",
+                      "http://purl.org/dc/terms/",
+                      "http://xmlns.com/foaf/0.1/",
+                      "http://www.openarchives.org/ore/terms/",
+                      "http://purl.org/spar/cito/",
+                      "http://www.w3.org/ns/prov#")
+
+prefixes <- c("rdf",
+              "xsd",
+              "rdfs",
+              "prov",
+              "provone",
+              "dc",
+              "dcterms",
+              "foaf",
+              "ore",
+              "cito",
+              "prov")
+
+knownNamespaces <- data.frame(namespace = namespace_vector, prefix = prefixes, stringsAsFactors = FALSE)
 
 # Open Archives Initiative Object Reuse and Exchange (OAI-ORE) terms
+ORE_NS <- "http://www.openarchives.org/ore/terms/"
 OREresourceMap <- "http://www.openarchives.org/ore/terms/ResourceMap"
 OREdescribes <- "http://www.openarchives.org/ore/terms/describes"
 OREisDescribedBy <- "http://www.openarchives.org/ore/terms/isDescribedBy"

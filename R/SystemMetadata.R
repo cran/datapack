@@ -26,7 +26,7 @@
 #' @aliases SystemMetadata-class
 #' @slot serialVersion value of type \code{"numeric"}, the current version of this system metadata; only update the current version
 #' @slot identifier value of type \code{"character"}, the identifier of the object that this system metadata describes.
-#' @slot replicationAllowed value of type \code{"logical"}, for replication policy allows replicants.
+#' @slot replicationAllowed value of type \code{"logical"}, replication policy allows replicas.
 #' @slot numberReplicas value of type \code{"numeric"}, for number of supported replicas.
 #' @slot preferredNodes value of type \code{"list"}, of preferred member nodes.
 #' @slot blockedNodes value of type \code{"list"}, of blocked member nodes.
@@ -105,7 +105,7 @@ setClass("SystemMetadata", slots = c(
 #' @param submitter value of type \code{"character"}, the Distinguished Name or identifier of the person submitting the object.
 #' @param rightsHolder value of type \code{"character"}, the Distinguished Name or identifier of the person who holds access rights to the object.
 #' @param accessPolicy value of type \code{"data.frame"} containing (subject, permission) tuples to constitute the access authorization rules.
-#' @param replicationAllowed value of type \code{"logical"}, for replication policy allows replicants.
+#' @param replicationAllowed value of type \code{"logical"}, for replication policy allows replicas.
 #' @param numberReplicas value of type \code{"numeric"}, for number of supported replicas.
 #' @param preferredNodes list of \code{"character"}, each of which is the node identifier for a node to which a replica should be sent.
 #' @param blockedNodes list of \code{"character"}, each of which is the node identifier for a node blocked from housing replicas.
@@ -126,12 +126,12 @@ setClass("SystemMetadata", slots = c(
 #' @export
 #' 
 setMethod("initialize", signature = "SystemMetadata", definition = function(.Object,
-    identifier=as.character(NA), formatId=as.character(NA), size=as.numeric(NA), checksum=as.character(NA), 
-    checksumAlgorithm="SHA-1", submitter=as.character(NA), rightsHolder=as.character(NA), accessPolicy=data.frame(subject = character(), permission=character()),
-    replicationAllowed=TRUE, numberReplicas=3, obsoletes=as.character(NA), obsoletedBy=as.character(NA), archived=FALSE, 
-    dateUploaded=as.character(NA), dateSysMetadataModified=as.character(NA), 
-    originMemberNode=as.character(NA), authoritativeMemberNode=as.character(NA), preferredNodes=list(), blockedNodes=list(),
-    seriesId=as.character(NA), mediaType=as.character(NA), fileName=as.character(NA), mediaTypeProperty=list()) {
+    identifier=NA_character_, formatId=NA_character_, size=NA_real_, checksum=NA_character_, 
+    checksumAlgorithm="SHA-1", submitter=NA_character_, rightsHolder=NA_character_, accessPolicy=data.frame(subject = character(), permission=character()),
+    replicationAllowed=TRUE, numberReplicas=3, obsoletes=NA_character_, obsoletedBy=NA_character_, archived=FALSE, 
+    dateUploaded=NA_character_, dateSysMetadataModified=NA_character_, 
+    originMemberNode=NA_character_, authoritativeMemberNode=NA_character_, preferredNodes=list(), blockedNodes=list(),
+    seriesId=NA_character_, mediaType=NA_character_, fileName=NA_character_, mediaTypeProperty=list()) {
     # defaults here
     .Object@serialVersion <- 1
     .Object@identifier <- as.character(identifier)
@@ -315,7 +315,7 @@ setMethod("parseSystemMetadata", signature("SystemMetadata"), function(x, xml, .
           x@mediaTypeProperty <- pList
       }
   } else {
-      x@mediaType <- as.character(NA)
+      x@mediaType <- NA_character_
       x@mediaTypeProperty <- list()
   }
   if (!is.null(xmlValue(xml[["fileName"]]))) x@fileName <- xmlValue(xml[["fileName"]])
@@ -341,7 +341,7 @@ setGeneric("serializeSystemMetadata", function(x, ...) {
   standardGeneric("serializeSystemMetadata")
 })
 #' @rdname serializeSystemMetadata
-#' @param version A character string representing the DataONE API version that this system will be used with (eg. "v1", "v2").
+#' @param version A character string representing the DataONE API version that this system will be used with (e.g. "v1", "v2").
 #' @return the character string representing a SystemMetadata object
 #' @examples 
 #' library(XML)
@@ -382,7 +382,7 @@ setMethod("serializeSystemMetadata", signature("SystemMetadata"), function(x, ve
     for (subject in subjects) {
       accessRule <- xmlNode("allow")
       accessRule <- addChildren(accessRule, xmlNode("subject", subject))
-      for(i in 1:nrow(x@accessPolicy)) {
+      for(i in seq_len(nrow(x@accessPolicy))) {
         if(as.character(x@accessPolicy[i,'subject']) == subject) {
           accessRule <- addChildren(accessRule, xmlNode("permission", x@accessPolicy[i,'permission']))
         }
@@ -534,7 +534,7 @@ setGeneric("removeAccessRule", function(x, ...) {
 })
 #' @rdname removeAccessRule
 #' @param y The subject of the rule to be removed, or a data.frame containing access rules.
-#' @param permission THe permission to remove, if parameter \code{x} is a character string containing a \code{subject}.
+#' @param permission The permission to remove, if parameter \code{x} is a character string containing a \code{subject}.
 #' @return The SystemMetadata object with the updated access policy.
 #' @examples 
 #' #
@@ -558,7 +558,7 @@ setGeneric("removeAccessRule", function(x, ...) {
 setMethod("removeAccessRule", signature("SystemMetadata"), function(x, y, ...) {
     if(class(y) == "data.frame") {
         if(nrow(y) == 0) return(x)
-        for(i in 1:nrow(y)) {
+        for(i in seq_len(nrow(y))) {
             # Use some temp vars to make the data.frame subset more legible
             subject <- as.character(y[i, 'subject'])
             permission <- as.character(y[i, 'permission'])
@@ -615,8 +615,8 @@ setGeneric("hasAccessRule", function(x, ...) {
 #' @return When called for SystemMetadata, boolean TRUE if the access rule exists already, FALSE otherwise
 setMethod("hasAccessRule", signature("SystemMetadata"), function(x, subject, permission) {
     # The match for subject and permission must be exact and the entire string must match.
-    found <- any(grepl(paste("^", subject,"$",sep=""), x@accessPolicy$subject) & 
-                     grepl(paste("^", permission, "$",sep=""), x@accessPolicy$permission))
+    found <- any(grepl(paste0("^", subject,"$"), x@accessPolicy$subject) & 
+                     grepl(paste0("^", permission, "$"), x@accessPolicy$permission))
     return(found)
 })
 

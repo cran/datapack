@@ -9,7 +9,7 @@
 updateMetadata(x, do, ...)
 
 \S4method{updateMetadata}{DataPackage}(x, do, xpath, replacement,
-  newId = as.character(NA), ...)
+  newId = NA_character_, ...)
 }
 \arguments{
 \item{x}{a DataPackage instance}
@@ -25,8 +25,6 @@ updateMetadata(x, do, ...)
 \item{newId}{A value of type \code{"character"} which will replace the identifier for this DataObject.}
 }
 \description{
-Update selected elements of the XML content of a DataObject in a DataPackage (aka package member).
-
 A DataObject that contains an XML document can be edited by specifying a path
 to the elements to edit (an XPath expression) and a value to replace the text node.
 }

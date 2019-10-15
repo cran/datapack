@@ -6,11 +6,11 @@
 \alias{DataObject-initialize}
 \title{Initialize a DataObject}
 \usage{
-\S4method{initialize}{DataObject}(.Object, id = as.character(NA),
-  dataobj = NA, format = as.character(NA), user = as.character(NA),
-  mnNodeId = as.character(NA), filename = as.character(NA),
-  seriesId = as.character(NA), mediaType = as.character(NA),
-  mediaTypeProperty = list(), dataURL = as.character(NA))
+\S4method{initialize}{DataObject}(.Object, id = NA_character_,
+  dataobj = NA, format = NA_character_, user = NA_character_,
+  mnNodeId = NA_character_, filename = NA_character_,
+  seriesId = NA_character_, mediaType = NA_character_,
+  mediaTypeProperty = list(), dataURL = NA_character_)
 }
 \arguments{
 \item{.Object}{the DataObject instance to be initialized}

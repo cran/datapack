@@ -64,8 +64,8 @@ myid
 
 ## ------------------------------------------------------------------------
 dp <- new("DataPackage")
-dp <- addData(dp, do = metadataObj)
-dp <- addData(dp, do = sciObj)
+dp <- addMember(dp, do = metadataObj)
+dp <- addMember(dp, do = sciObj)
 # The second object will be added in the next section 
 
 ## ------------------------------------------------------------------------
@@ -81,7 +81,7 @@ sciObjRaw <- getData(dp, sciId)
 mySciObj <- getMember(dp, sciId)
 
 ## ------------------------------------------------------------------------
-dp <- addData(dp, do = sciObj2, mo = metadataObj)
+dp <- addMember(dp, do = sciObj2, mo = metadataObj)
 getRelationships(dp, condense=TRUE)
 
 ## ------------------------------------------------------------------------
@@ -90,20 +90,26 @@ dp <- new("DataPackage")
 # This DataObject contains the program script that was executed
 progObj <- new("DataObject", format="application/R", 
            filename=system.file("extdata/pkg-example/logit-regression-example.R", package="datapack"))
-dp <- addData(dp, progObj)
+dp <- addMember(dp, progObj)
 
 doIn <- new("DataObject", format="text/csv", 
              filename=system.file("./extdata/pkg-example/binary.csv", package="datapack"))
-dp <- addData(dp, doIn)
+dp <- addMember(dp, doIn)
 
 doOut <- new("DataObject", format="image/png", 
              filename=system.file("./extdata/pkg-example/gre-predicted.png", package="datapack"))
-dp <- addData(dp, doOut)
+dp <- addMember(dp, doOut)
 
 # The arguments "sources" and "derivations" can also contain lists of "DataObjects"
 dp <- describeWorkflow(dp, sources=doIn, program=progObj, derivations=doOut)
+
+
 rels <- getRelationships(dp, condense=TRUE)
 rels[grepl("prov:", rels$predicate),]
+
+## ------------------------------------------------------------------------
+library(igraph)
+plotRelationships(dp)
 
 ## ------------------------------------------------------------------------
 dp <- insertRelationship(dp, subjectID=metadataId, objectIDs=sciId)
