@@ -325,6 +325,10 @@ setMethod("addMember", signature("DataPackage"), function(x, do, mo=NA_character
             insertRelationship(x, getIdentifier(mo), getIdentifier(iObj))
         }
     }
+    # If the object's path was documented, add it to the resource map
+    if (!is.na(iObj@targetPath)){
+        insertRelationship(x, getIdentifier(iObj), iObj@targetPath, provAtLocation)
+    }
     return(x)
 })
 
@@ -388,10 +392,10 @@ setMethod("insertRelationship", signature("DataPackage"),
   # If a predicate wasn't provided, then insert the default relationship of 
   # subjectID -> documents -> objectID; objectID -> documentedBy -> subjectID
   if (is.na(predicate)) {
-    insertRelationship(x, subjectID, objectIDs, "http://purl.org/spar/cito/documents")
+    insertRelationship(x, subjectID, objectIDs, citoDocuments)
     
     for (obj in objectIDs) {
-      insertRelationship(x, obj, subjectID, "http://purl.org/spar/cito/isDocumentedBy")
+      insertRelationship(x, obj, subjectID, citoIsDocumentedBy)
     }
   } else {
     # Append new relationships to previously stored ones.
@@ -408,7 +412,7 @@ setMethod("insertRelationship", signature("DataPackage"),
     # Validationa (https://www.w3.org/RDF/Validator/). Node ids starting with numeric characters or containing 
     # colons do not pass validation (note that blank node identifiers such as '_:b1' do not pass validattion).
     if (is.na(subjectID)) {
-      subjectID <- sprintf("_%s", UUIDgenerate())
+      subjectID <- sprintf("_%s", uuid::UUIDgenerate())
       subjectType <- "blank"
     }
     
@@ -419,7 +423,7 @@ setMethod("insertRelationship", signature("DataPackage"),
       i <- i + 1
       # Generate a blank node identifier if id is not specified
       if (is.na(obj)) {
-        obj <- sprintf("_%s", UUIDgenerate())
+        obj <- sprintf("_%s", uuid::UUIDgenerate())
         objectTypes[i] <- "blank"
       }
       
@@ -868,7 +872,7 @@ setMethod("replaceMember", signature("DataPackage"), function(x, do, replacement
         # so assign a new id if they are.
         if(newObj@oldId == getIdentifier(newObj)) {
             if(is.na(newId)) {
-                newId <- sprintf("urn:uuid:%s", UUIDgenerate())
+                newId <- sprintf("urn:uuid:%s", uuid::UUIDgenerate())
                 newObj@sysmeta@identifier <- newId
             } else {
                 newObj@sysmeta@identifier <- newId
@@ -891,12 +895,13 @@ setMethod("replaceMember", signature("DataPackage"), function(x, do, replacement
     
     # If replacement is a DataObject, then replace the existing DataObject 'do' with the
     # DataObject 'replacement'
+    algorithm <- x@sysmeta@checksumAlgorithm
     if (is.raw(replacement)) {
         newObj@data <- replacement
         newObj@filename <- NA_character_
         newObj@sysmeta@size <- length(newObj@bytes)
-        newObj@sysmeta@checksum <- digest(newObj@bytes, algo="sha1", serialize=FALSE, file=FALSE)
-        newObj@sysmeta@checksumAlgorithm <- "SHA-1"
+        newObj@sysmeta@checksum <- calculateChecksum(newObj, checksumAlgorithm=algorithm)
+        newObj@sysmeta@checksumAlgorithm <- algorithm
     } else if (class(replacement) == "character") {
         # If 'replacement' is a character string, then it is
         # assumed to be a filename that replaces the DataObjects existing filename
@@ -908,8 +913,8 @@ setMethod("replaceMember", signature("DataPackage"), function(x, do, replacement
         newObj@sysmeta@fileName <- basename(replacement)
         newObj@data <- raw()
         newObj@sysmeta@size <- fileinfo$size
-        newObj@sysmeta@checksum <- digest(replacement, algo="sha1", serialize=FALSE, file=TRUE)
-        newObj@sysmeta@checksumAlgorithm <- "SHA-1"
+        newObj@sysmeta@checksum <- calculateChecksum(newObj, checksumAlgorithm=algorithm)
+        newObj@sysmeta@checksumAlgorithm <- algorithm
     } else if (class(replacement) != "DataObject") {
         stop(sprintf("Unknown replacement type: %s\n", class(replacement)))
     }
@@ -1637,31 +1642,32 @@ setMethod("serializeToBagIt", signature("DataPackage"), function(x, mapId=NA_cha
     dataObj <- getMember(x, identifiers[idNum])
     # Was the DataObject created with the 'file' arg, i.e. data not in the DataObject,
     # but at a specified file out on disk?
+    
     if(!is.na(dataObj@filename)) {
-      if(file.exists(dataObj@filename)) {
-        relFile <- sprintf("data/%s", basename(dataObj@filename))
-        file.copy(dataObj@filename, sprintf("%s/%s", bagDir, relFile))
+        if(file.exists(dataObj@filename)) {
+            relFile <- sprintf("data/%s", basename(dataObj@filename))
+            file.copy(dataObj@filename, sprintf("%s/%s", bagDir, relFile))
+            # Add this data pacakge member to the bagit files
+            pidMap <- c(pidMap, sprintf("%s %s", identifiers[idNum], relFile))
+            thisMd5 <- digest(sprintf("%s/%s", bagDir, relFile), algo="md5", file=TRUE)
+            manifest <- c(manifest, sprintf("%s %s", as.character(thisMd5), relFile))
+        } else {
+            stop(sprintf("Error serializing to BagIt format, data object \"%s\", uses file %s but this file doesn't exist", dataObj@filename, identifiers[idNum]))
+        }
+    } else {
+        # Must be an in-memory data object
+        tf <- tempfile()
+        con <- file(tf, "wb")
+        writeBin(getData(dataObj), con)
+        close(con)
+        relFile <- sprintf("data/%s", getIdentifier(dataObj))
+        file.copy(tf, sprintf("%s/%s", bagDir, relFile))
+        unlink(tf)
+        rm(tf)
         # Add this data pacakge member to the bagit files
         pidMap <- c(pidMap, sprintf("%s %s", identifiers[idNum], relFile))
         thisMd5 <- digest(sprintf("%s/%s", bagDir, relFile), algo="md5", file=TRUE)
-        manifest <- c(manifest, sprintf("%s %s", as.character(thisMd5), relFile))  
-      } else {
-        stop(sprintf("Error serializing to BagIt format, data object \"%s\", uses file %s but this file doesn't exist", dataObj@filename, identifiers[idNum]))
-      }
-    } else {
-      # Must be an in-memory data object
-      tf <- tempfile()
-      con <- file(tf, "wb")
-      writeBin(getData(dataObj), con)
-      close(con)
-      relFile <- sprintf("data/%s", getIdentifier(dataObj))
-      file.copy(tf, sprintf("%s/%s", bagDir, relFile))
-      unlink(tf)
-      rm(tf)
-      # Add this data pacakge member to the bagit files
-      pidMap <- c(pidMap, sprintf("%s %s", identifiers[idNum], relFile))
-      thisMd5 <- digest(sprintf("%s/%s", bagDir, relFile), algo="md5", file=TRUE)
-      manifest <- c(manifest, sprintf("%s %s", as.character(thisMd5), relFile))
+        manifest <- c(manifest, sprintf("%s %s", as.character(thisMd5), relFile))
     }
   }
   
