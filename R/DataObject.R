@@ -41,13 +41,12 @@
 #' @slot data A value of type \code{"raw"}, containing the data represented in this object
 #' @slot filename A character value that contains the fully-qualified path to the object data on disk
 #' @slot dataURL A character value for the URL used to load data into this DataObject
-#' @slot updated A hash containing logical values which indicate if system metadata or the data object have been updated since object creation.
+#' @slot updated A list containing logical values which indicate if system metadata or the data object have been updated since object creation.
 #' @slot oldId A character string containing the previous identifier used, before a \code{"replaceMember"} call.
-#' @slot targetPath A character string holding the path of where the file should be in an exported package
+#' @slot targetPath An optional character string holding the path of where the file is placed in a downloaded package.
 #' @rdname DataObject-class
 #' @keywords classes
 #' @import methods
-#' @import hash
 #' @include dmsg.R
 #' @include SystemMetadata.R
 #' @aliases DataObject-class
@@ -92,7 +91,7 @@ setClass("DataObject", slots = c(
     data                    = "raw",
     filename                = "character",
     dataURL                 = "character",
-    updated                 = "hash",
+    updated                 = "list",
     oldId                   = "character",
     targetPath              = "character")
 )
@@ -141,7 +140,7 @@ setMethod("initialize", "DataObject", function(.Object, id=NA_character_, dataob
                                                targetPath=NA_character_, checksumAlgorithm="SHA-256") {
   
     # If no value has been passed in for 'id', then create a UUID for it.
-    if (class(id) != "SystemMetadata" && is.na(id)) {
+    if (!inherits(id, "SystemMetadata") && is.na(id)) {
         id <- paste0("urn:uuid:", UUIDgenerate())
     }
     
@@ -207,7 +206,7 @@ setMethod("initialize", "DataObject", function(.Object, id=NA_character_, dataob
                                checksum=checksum, checksumAlgorithm=checksumAlgorithm, originMemberNode=mnNodeId, authoritativeMemberNode=mnNodeId, 
                                seriesId=seriesId, mediaType=mediaType, fileName=basename(smfile), 
                                mediaTypeProperty=mediaTypeProperty)
-    } else if (typeof(id) == "S4" && class(id) == "SystemMetadata") {
+    } else if (typeof(id) == "S4" && inherits(id, "SystemMetadata")) {
         .Object@sysmeta <- id
         if(hasDataObj) {
             if(!is.raw(dataobj[[1]])) stop("The value of the \"dataobj\" parameter must be of type \"raw\"")
@@ -235,11 +234,15 @@ setMethod("initialize", "DataObject", function(.Object, id=NA_character_, dataob
     } else {
         stop("Invalid value for \"identifier\" argument, it must be a character or SystemMetadata value\n")
     }
-    
+
     # Test if this DataObject is brand new, or possibly created from an existing object, i.e.
     # downloaded from a data repository
-    .Object@updated <- hash( keys=c("sysmeta", "data"), values=c(FALSE, FALSE))
+    .Object@updated <- list("sysmeta" = FALSE, "data" = FALSE)
     .Object@oldId <- NA_character_
+    if (!is.na(targetPath)) {
+        targetPath <- pathToPOSIX(targetPath)
+    }
+
     .Object@targetPath <- targetPath
     return(.Object)
 })
@@ -639,10 +642,55 @@ setMethod("show", "DataObject",
               if(!is.na(object@filename)) {
                 cat(sprintf(fmt, "  filename", object@filename))
               } else {
-                cat("  ", class(object@data), ": ", head(object@data), " ...\n")
+                cat("  ", class(object@data), ": ", utils::head(object@data), " ...\n")
               }
           }
 )
+
+# Returns a path in the form of the native OS. When run
+# on Windows, a Windows compliant path is returned. When run on
+# PSOIX, a POSIX compliant path is returned.
+getPlatformPath <- function(filePath) {
+    if(.Platform$OS.type == "windows") {
+        filePath <- pathToWindows(filePath)
+    } else {
+        filePath <-pathToPOSIX(filePath)
+    }
+    return(filePath)
+}
+
+# Turns a path into a POSIX compliant path
+pathToPOSIX <- function(filePath) {
+    filePath <- gsub('\\\\', '/', filePath)
+    filterList <- list( '$', '?', '|', '"', '<', '>', '..')
+    pathInformation <- sanitizePath(filePath, filterList)
+    # Replace any windows-style paths
+    return(file.path(pathInformation[1], pathInformation[2]))
+}
+
+# Turns a path into a Windows compliant path
+pathToWindows<- function(filePath) {
+    # List of things that shouldn't be in a path
+    filterList <- list( '?', '*', '|', '"', '<', '>', '..')
+    pathInformation <- sanitizePath(filePath, filterList)
+    return(file.path(pathInformation[1], pathInformation[2]))
+}
+
+# Takes a path and a list of characters that should be removed
+# and returns the path without the characters. It also sanitizes the
+# file name .
+sanitizePath <- function(filePath, filterList) {
+    filename <- basename(filePath)
+    path = dirname(filePath)
+    
+    filename <- fs::path_sanitize(filename, "")
+    
+    # List of things that shouldn't be in a path
+    for (filterCharacter in filterList) {
+        path <- gsub(filterCharacter, '_', path, fixed=TRUE)
+    }
+    return(c(path, filename))
+}
 
 # DataONE uses different abbreviations for checksum algorithms than the R 'digest' function.
 # Given a DataONE checksum algorithm abbreviation, return the corresponding 'digest' abbreviation,

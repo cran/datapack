@@ -36,11 +36,11 @@ contents of the data or file as a raw value (but this will read all of the data 
 
 \item{\code{dataURL}}{A character value for the URL used to load data into this DataObject}
 
-\item{\code{updated}}{A hash containing logical values which indicate if system metadata or the data object have been updated since object creation.}
+\item{\code{updated}}{A list containing logical values which indicate if system metadata or the data object have been updated since object creation.}
 
 \item{\code{oldId}}{A character string containing the previous identifier used, before a \code{"replaceMember"} call.}
 
-\item{\code{targetPath}}{A character string holding the path of where the file should be in an exported package}
+\item{\code{targetPath}}{An optional character string holding the path of where the file is placed in a downloaded package.}
 }}
 
 \section{Methods}{
